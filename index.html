@@ -1,0 +1,51 @@
+<html>
+  <head>
+    <script src="/__internal__/livereload.js"></script>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <div class="container">
+      <div class="actions">
+        <h2>Actions</h2>
+        <div>
+          <textarea id="urls" rows="2" cols="50" placeholder="Paste a URL here"></textarea>
+        </div>
+        <div>
+          <!-- <button id="loadFromRobots">Load URLs from robots</button> -->
+          <button id="runImport">Import</button>
+          <button class="hidden" id="save">Save as Word</button>
+        </div>
+      </div>
+      <div class="frame">
+        <h2>Current Page</h2>
+        <iframe id="contentFrame" src=""></iframe>
+      </div>
+      <div class="transformer hlx-importer">
+        <div class="tabs">
+          <div class="active tab" data-tab="markdown">Markdown</div>
+          <div class="tab" data-tab="source">Souce</div>
+          <div class="tab" data-tab="html">HTML</div>
+        </div>
+        <div class="panels">
+          <div data-panel="markdown" id="markdownPreview"></div>
+          <div data-panel="source" class="code hidden">
+            <textarea id="markdownSource" rows="4" cols="10"></textarea>
+          </div>
+          <div data-panel="html" class="code hidden">
+            <textarea id="transformed" rows="4" cols="10"></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.1/codemirror.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.1/mode/xml/xml.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.1/mode/javascript/javascript.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.1/mode/css/css.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.1/mode/htmlmixed/htmlmixed.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.1/mode/markdown/markdown.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-beautify/1.14.0/beautify-html.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/1.9.1/showdown.min.js"></script>
+    <script src="lib/importer-bundle.js"></script>
+    <script src="./ui.js" type="module"></script>
+  </body>
+</html>
