@@ -9,17 +9,19 @@
  * OF ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
  */
-/* global CodeMirror, showdown, html_beautify */
+/* global CodeMirror, showdown, html_beautify, ExcelJS */
 import { getDirectoryHandle, saveFile } from './filesystem.js';
 import PollImporter from './pollimporter.js';
+import { loadURLsFromRobots } from './sitemap.js';
 
 const CONTENT_FRAME = document.getElementById('contentFrame');
 const URLS_INPUT = document.getElementById('urls');
 const OPTION_FIELDS = document.querySelectorAll('.optionField');
 const IMPORT_BUTTON = document.getElementById('runImport');
 const TABS_CONTAINER = document.querySelectorAll('.tabs-container');
-const SAVEASWORD_BUTTON = document.getElementById('saveAsWord');
+// const SAVEASWORD_BUTTON = document.getElementById('saveAsWord');
 const FOLDERNAME_SPAN = document.getElementById('folderName');
+const GETURLSFROMROBOTS_BUTTON = document.getElementById('getURLsFromRobots');
 
 const ui = {};
 const config = {};
@@ -47,7 +49,7 @@ const setupUI = () => {
   ui.markdownPreview.innerHTML = ui.showdownConverter.makeHtml('# Run an import to see some markdown.');
 };
 
-const updateUI = (out, includeDocx) => {
+const updateUI = (out) => {
   const { md, html: outputHTML } = out;
 
   ui.transformedEditor.setValue(html_beautify(outputHTML));
@@ -62,9 +64,9 @@ const updateUI = (out, includeDocx) => {
     t.removeAttribute('style');
   });
 
-  if (!includeDocx) {
-    SAVEASWORD_BUTTON.classList.remove('hidden');
-  }
+  // if (!includeDocx) {
+  //   SAVEASWORD_BUTTON.classList.remove('hidden');
+  // }
 };
 
 const attachListeners = () => {
@@ -166,14 +168,33 @@ const attachListeners = () => {
     });
   });
 
-  SAVEASWORD_BUTTON.addEventListener('click', (async () => {
-    const { docx, filename } = await config.importer.transform(true);
+  // SAVEASWORD_BUTTON.addEventListener('click', (async () => {
+  //   const { docx, filename } = await config.importer.transform(true);
 
-    const a = document.createElement('a');
-    const blob = new Blob([docx], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
-    a.setAttribute('href', URL.createObjectURL(blob));
-    a.setAttribute('download', filename);
-    a.click();
+  //   const a = document.createElement('a');
+  // const blob = new Blob([docx],
+  // { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+  //   a.setAttribute('href', URL.createObjectURL(blob));
+  //   a.setAttribute('download', filename);
+  //   a.click();
+  // }));
+
+  GETURLSFROMROBOTS_BUTTON.addEventListener('click', (async () => {
+    const urls = await loadURLsFromRobots(config.hostReplace);
+    if (urls === 0) {
+      // eslint-disable-next-line no-alert
+      alert(`No urls found. robots.txt or sitemap might not exist on ${config.hostReplace}`);
+    } else {
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet('Sheet 1');
+      worksheet.addRows([['URL']].concat(urls.map((u) => [u])));
+      const buffer = await workbook.xlsx.writeBuffer();
+      const a = document.createElement('a');
+      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      a.setAttribute('href', URL.createObjectURL(blob));
+      a.setAttribute('download', 'urls.xlsx');
+      a.click();
+    }
   }));
 };
 

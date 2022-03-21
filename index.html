@@ -1,5 +1,7 @@
 <html>
   <head>
+    <!-- TODO: remove - livereload script is useful during dev but should be removed afterward -->
+    <script src="/__internal__/livereload.js"></script>
     <link rel="stylesheet" href="./css/styles.css">
   </head>
   <body>
@@ -14,9 +16,9 @@
             <div data-panel="actions">
               <label for="urls">URL(s):</label>
               <textarea id="urls" rows="2" cols="50" class="optionField" placeholder="Paste a URL here"></textarea>
-              <!-- <button id="loadFromRobots">Load URLs from robots</button> -->
               <button id="runImport">Import</button>
-              <button class="hidden" id="saveAsWord">Save as Word</button>
+              <!-- <button id="loadFromRobots">Load URLs from robots</button> -->
+              <!-- <button class="hidden" id="saveAsWord">Download current as Word</button> -->
               <span class="hidden" id="folderName"></span>
             </div>
             <div data-panel="options" class="hidden">
@@ -37,6 +39,7 @@
                   <label for="hostReplace">Host replace:</label>
                   <input id="hostReplace" type="text" class="optionField" value="http://localhost:3000">
                 </div>
+                <button id="getURLsFromRobots">Download list of URLs from robots.txt</button>
               </div>
             </div>
           </div>
@@ -75,6 +78,8 @@
     <script src="./js/libs/vendors/codemirror/markdown.js"></script>
     <script src="./js/libs/vendors/js-beautify/beautify-html.min.js"></script>
     <script src="./js/libs/vendors/showdown/showdown.min.js"></script>
+    <script src="./js/libs/vendors/babel-polyfill/polyfill.js"></script>
+    <script src="./js/libs/vendors/exceljs/exceljs.min.js"></script>
     <script src="./js/libs/hlx/importer-bundle.js"></script>
     <script src="./js/ui.js" type="module"></script>
   </body>
