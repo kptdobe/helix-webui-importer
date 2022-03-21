@@ -32,7 +32,7 @@ const setupUI = () => {
     mode: 'htmlmixed',
     theme: 'base16-dark',
   });
-  ui.transformedEditor.setSize('100%', '440');
+  ui.transformedEditor.setSize('100%', '500');
 
   ui.markdownSource = document.getElementById('markdownSource');
   ui.markdownEditor = CodeMirror.fromTextArea(ui.markdownSource, {
@@ -40,11 +40,11 @@ const setupUI = () => {
     mode: 'markdown',
     theme: 'base16-dark',
   });
-  ui.markdownEditor.setSize('100%', '440');
+  ui.markdownEditor.setSize('100%', '500');
 
   ui.showdownConverter = new showdown.Converter();
   ui.markdownPreview = document.getElementById('markdownPreview');
-  ui.markdownPreview.innerHTML = ui.showdownConverter.makeHtml('# Run import first!');
+  ui.markdownPreview.innerHTML = ui.showdownConverter.makeHtml('# Run an import to see some markdown.');
 };
 
 const updateUI = (out, includeDocx) => {
@@ -115,7 +115,7 @@ const attachListeners = () => {
         const u = new URL(url, config.hostReplace);
         CONTENT_FRAME.src = u.pathname;
 
-        ui.markdownPreview.innerHTML = ui.showdownConverter.makeHtml('# Work in progress...');
+        ui.markdownPreview.innerHTML = ui.showdownConverter.makeHtml('# Import in progress...');
         ui.transformedEditor.setValue('');
         ui.markdownEditor.setValue('');
       } else {
