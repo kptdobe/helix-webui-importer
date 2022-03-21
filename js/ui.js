@@ -15,19 +15,17 @@ import PollImporter from './pollimporter.js';
 
 const CONTENT_FRAME = document.getElementById('contentFrame');
 const URLS_INPUT = document.getElementById('urls');
+const OPTION_FIELDS = document.querySelectorAll('.optionField');
 const IMPORT_BUTTON = document.getElementById('runImport');
-const TABS_BUTTONS = document.querySelectorAll('.tabs .tab');
+const TABS_CONTAINER = document.querySelectorAll('.tabs-container');
 const SAVEASWORD_BUTTON = document.getElementById('save');
 
-const importer = new PollImporter({
-  poll: false,
-});
-
 const ui = {};
+const config = {};
 
 let dirHandle = null;
 
-const setup = () => {
+const setupUI = () => {
   ui.transformedEditor = CodeMirror.fromTextArea(document.getElementById('transformed'), {
     lineNumbers: true,
     mode: 'htmlmixed',
@@ -72,11 +70,11 @@ const attachListeners = () => {
 
     window.setTimeout(async () => {
       try {
-        importer.setTransformationInput({
+        config.importer.setTransformationInput({
           url: CONTENT_FRAME.contentDocument.location.href,
           document: CONTENT_FRAME.contentDocument,
         });
-        const out = await importer.transform(includeDocx);
+        const out = await config.importer.transform(includeDocx);
         updateUI(out);
         if (includeDocx) {
           const { docx, filename } = out;
@@ -89,14 +87,15 @@ const attachListeners = () => {
 
       const event = new Event('transformation-complete');
       CONTENT_FRAME.dispatchEvent(event);
-    }, 2000);
+    }, config.pageLoadTimeout);
   });
 
   IMPORT_BUTTON.addEventListener('click', (async () => {
-    if (!dirHandle) {
+    if (config.localSave && !dirHandle) {
       try {
         dirHandle = await getDirectoryHandle();
       } catch (error) {
+        // eslint-disable-next-line no-console
         console.log('No directory selected');
       }
     }
@@ -105,7 +104,7 @@ const attachListeners = () => {
     const processNext = () => {
       if (urlsArray.length > 0) {
         const url = urlsArray.pop();
-        const u = new URL(url, window.location.href);
+        const u = new URL(url, config.hostReplace);
         CONTENT_FRAME.src = u.pathname;
 
         ui.markdownPreview.innerHTML = ui.showdownConverter.makeHtml('# Work in progress...');
@@ -119,36 +118,43 @@ const attachListeners = () => {
     processNext();
   }));
 
-  URLS_INPUT.addEventListener('change', () => {
-    localStorage.setItem('urls-input', URLS_INPUT.value);
+  OPTION_FIELDS.forEach((field) => {
+    field.addEventListener('change', () => {
+      const value = field.type === 'checkbox' ? field.checked : field.value;
+      config[field.id] = value;
+      localStorage.setItem(`option-field-${field.id}`, value);
+    });
   });
 
-  TABS_BUTTONS.forEach((button) => {
-    button.addEventListener('click', (evt) => {
-      const { tab } = evt.target.dataset;
+  TABS_CONTAINER.forEach((container) => {
+    const buttons = container.querySelectorAll('.tab');
+    buttons.forEach((button) => {
+      button.addEventListener('click', (evt) => {
+        const { tab } = evt.target.dataset;
 
-      TABS_BUTTONS.forEach((p) => {
-        if (p.dataset.tab === tab) {
-          p.classList.add('active');
-        } else {
-          p.classList.remove('active');
-        }
-      });
+        buttons.forEach((p) => {
+          if (p.dataset.tab === tab) {
+            p.classList.add('active');
+          } else {
+            p.classList.remove('active');
+          }
+        });
 
-      document.querySelectorAll('.panels > div').forEach((p) => {
-        if (p.dataset.panel === tab) {
-          p.classList.remove('hidden');
-        } else {
-          p.classList.add('hidden');
-        }
-        ui.markdownEditor.refresh();
-        ui.transformedEditor.refresh();
+        container.querySelectorAll('.panels > div').forEach((p) => {
+          if (p.dataset.panel === tab) {
+            p.classList.remove('hidden');
+          } else {
+            p.classList.add('hidden');
+          }
+          ui.markdownEditor.refresh();
+          ui.transformedEditor.refresh();
+        });
       });
     });
   });
 
   SAVEASWORD_BUTTON.addEventListener('click', (async () => {
-    const { docx, filename } = await importer.transform(true);
+    const { docx, filename } = await config.importer.transform(true);
 
     const a = document.createElement('a');
     const blob = new Blob([docx], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
@@ -159,12 +165,25 @@ const attachListeners = () => {
 };
 
 const init = () => {
-  const item = localStorage.getItem('urls-input');
-  if (item) {
-    URLS_INPUT.value = item;
-  }
+  OPTION_FIELDS.forEach((field) => {
+    const value = localStorage.getItem(`option-field-${field.id}`);
+    if (value !== null) {
+      if (field.type === 'checkbox') {
+        field.checked = (value === 'true');
+      } else {
+        field.value = value;
+      }
+    }
 
-  setup();
+    config[field.id] = field.type === 'checkbox' ? field.checked : field.value;
+  });
+
+  config.importer = new PollImporter({
+    poll: false,
+    importFileURL: config.importFileURL,
+  });
+
+  setupUI();
   attachListeners();
 };
 

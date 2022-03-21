@@ -7,33 +7,63 @@
   <body>
     <div class="container">
       <div class="actions">
-        <h2>Actions</h2>
-        <div>
-          <textarea id="urls" rows="2" cols="50" placeholder="Paste a URL here"></textarea>
+        <div class="tabs-container">
+          <div class="tabs">
+            <div class="active tab" data-tab="actions">Actions</div>
+            <div class="tab" data-tab="options">Options</div>
+          </div>
+          <div class="panels">
+            <div data-panel="actions">
+              <label for="urls">URL(s):</label>
+              <textarea id="urls" rows="2" cols="50" class="optionField" placeholder="Paste a URL here"></textarea>
+              <!-- <button id="loadFromRobots">Load URLs from robots</button> -->
+              <button id="runImport">Import</button>
+              <button class="hidden" id="save">Save as Word</button>
+            </div>
+            <div data-panel="options" class="hidden">
+              <div class="options-form">
+                <div>
+                  <label for="localSave">Local save:</label>
+                  <input id="localSave" type="checkbox" class="optionField" checked>
+                </div>
+                <div>
+                  <label for="importFileURL">Import file URL:</label>
+                  <input id="importFileURL" type="text" class="optionField" value="http://localhost:3000/tools/importer/import.js">
+                </div>
+                <div>
+                  <label for="pageLoadTimeout">Page load timeout:</label>
+                  <input id="pageLoadTimeout" type="text" class="optionField" value="2000">
+                </div>
+                <div>
+                  <label for="hostReplace">Host replace:</label>
+                  <input id="hostReplace" type="text" class="optionField" value="http://localhost:3000">
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
         <div>
-          <!-- <button id="loadFromRobots">Load URLs from robots</button> -->
-          <button id="runImport">Import</button>
-          <button class="hidden" id="save">Save as Word</button>
-        </div>
+      </div>
       </div>
       <div class="frame">
         <h2>Current Page</h2>
         <iframe id="contentFrame" src=""></iframe>
       </div>
       <div class="transformer hlx-importer">
-        <div class="tabs">
-          <div class="active tab" data-tab="markdown">Markdown</div>
-          <div class="tab" data-tab="source">Souce</div>
-          <div class="tab" data-tab="html">HTML</div>
-        </div>
-        <div class="panels">
-          <div data-panel="markdown" id="markdownPreview"></div>
-          <div data-panel="source" class="code hidden">
-            <textarea id="markdownSource" rows="4" cols="10"></textarea>
+        <div class="tabs-container">
+          <div class="tabs">
+            <div class="active tab" data-tab="markdown">Markdown</div>
+            <div class="tab" data-tab="source">Souce</div>
+            <div class="tab" data-tab="html">HTML</div>
           </div>
-          <div data-panel="html" class="code hidden">
-            <textarea id="transformed" rows="4" cols="10"></textarea>
+          <div class="panels">
+            <div data-panel="markdown" id="markdownPreview"></div>
+            <div data-panel="source" class="code hidden">
+              <textarea id="markdownSource" rows="4" cols="10"></textarea>
+            </div>
+            <div data-panel="html" class="code hidden">
+              <textarea id="transformed" rows="4" cols="10"></textarea>
+            </div>
           </div>
         </div>
       </div>
