@@ -32,6 +32,7 @@ export default class PollImporter {
           this.projectTransform = mod.default;
         }
       } catch (err) {
+        // eslint-disable-next-line no-console
         console.warn('failed to load project transform module', err);
       }
     };
@@ -50,6 +51,7 @@ export default class PollImporter {
         }
       } catch (err) {
         if ($this.lastProjectTransformFileBody !== 'nofilefound') {
+          // eslint-disable-next-line no-console
           console.warn('failed to poll project transform module', err);
           $this.lastProjectTransformFileBody = 'nofilefound';
           if ($this.transformationURL && $this.transformationDocument) {

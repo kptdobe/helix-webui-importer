@@ -1,5 +1,5 @@
-@import url("https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.1/codemirror.min.css");
-@import url("https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.1/theme/base16-dark.css");
+@import url("./libs/vendors/codemirror/codemirror.min.css");
+@import url("./libs/vendors/codemirror/base16-dark.css");
 
 :host,
 :root {
