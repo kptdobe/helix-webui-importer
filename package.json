@@ -1,0 +1,31 @@
+{
+  "name": "@adobe/helix-webui-importer",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Import Import tool",
+  "scripts": {
+    "lint:js": "eslint .",
+    "lint:css": "stylelint 'styles.css'",
+    "lint": "npm run lint:js && npm run lint:css"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kptdobe/helix-webui-importer.git"
+  },
+  "author": "Adobe",
+  "license": "Apache License 2.0",
+  "bugs": {
+    "url": "https://github.com/kptdobe/helix-webui-importer/issues"
+  },
+  "homepage": "https://github.com/kptdobe/helix-webui-importer#readme",
+  "devDependencies": {
+    "@babel/core": "7.17.5",
+    "@babel/eslint-parser": "7.17.0",
+    "eslint": "8.10.0",
+    "eslint-config-airbnb-base": "15.0.0",
+    "eslint-plugin-import": "2.25.4",
+    "stylelint": "14.5.3",
+    "stylelint-config-prettier": "9.0.3",
+    "stylelint-config-standard": "25.0.0"
+  }
+}
