@@ -18,7 +18,8 @@ const URLS_INPUT = document.getElementById('urls');
 const OPTION_FIELDS = document.querySelectorAll('.optionField');
 const IMPORT_BUTTON = document.getElementById('runImport');
 const TABS_CONTAINER = document.querySelectorAll('.tabs-container');
-const SAVEASWORD_BUTTON = document.getElementById('save');
+const SAVEASWORD_BUTTON = document.getElementById('saveAsWord');
+const FOLDERNAME_SPAN = document.getElementById('folderName');
 
 const ui = {};
 const config = {};
@@ -46,7 +47,7 @@ const setupUI = () => {
   ui.markdownPreview.innerHTML = ui.showdownConverter.makeHtml('# Run import first!');
 };
 
-const updateUI = (out) => {
+const updateUI = (out, includeDocx) => {
   const { md, html: outputHTML } = out;
 
   ui.transformedEditor.setValue(html_beautify(outputHTML));
@@ -61,7 +62,9 @@ const updateUI = (out) => {
     t.removeAttribute('style');
   });
 
-  SAVEASWORD_BUTTON.classList.remove('hidden');
+  if (!includeDocx) {
+    SAVEASWORD_BUTTON.classList.remove('hidden');
+  }
 };
 
 const attachListeners = () => {
@@ -75,7 +78,7 @@ const attachListeners = () => {
           document: CONTENT_FRAME.contentDocument,
         });
         const out = await config.importer.transform(includeDocx);
-        updateUI(out);
+        updateUI(out, includeDocx);
         if (includeDocx) {
           const { docx, filename } = out;
           await saveFile(dirHandle, filename, docx);
@@ -94,6 +97,11 @@ const attachListeners = () => {
     if (config.localSave && !dirHandle) {
       try {
         dirHandle = await getDirectoryHandle();
+        await dirHandle.requestPermission({
+          mode: 'readwrite',
+        });
+        FOLDERNAME_SPAN.innerText = `Saving file(s) to: ${dirHandle.name}`;
+        FOLDERNAME_SPAN.classList.remove('hidden');
       } catch (error) {
         // eslint-disable-next-line no-console
         console.log('No directory selected');

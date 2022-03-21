@@ -70,7 +70,7 @@
 }
 
 .tabs {
-  width: 100%;
+  width: calc(100% - 14px);
   background-color: var(--hlx-importer-tab-bg);
   height: 44px;
   margin-left: 4px;
