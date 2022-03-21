@@ -24,7 +24,7 @@ In the `URL(s)` field, give a list of page URLs to be imported (e.g. {https://ho
 
 A default html to Markdown is applied by you can / need to provide your own. Initially the import transformation file is fetched at http://localhost:3000/tools/importer/import.js (can be changed in the options). Create the file using the following template:
 
-<script src="https://gist.github.com/kptdobe/8a726387ecca80dde2081b17b3e913f7.js"></script>
+https://gist.github.com/kptdobe/8a726387ecca80dde2081b17b3e913f7
 
 ## Options
 
