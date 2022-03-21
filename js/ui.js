@@ -103,13 +103,14 @@ const attachListeners = () => {
 
     const urlsArray = URLS_INPUT.value.split('\n').reverse().filter((u) => u.trim() !== '');
     const processNext = () => {
-      ui.markdownPreview.innerHTML = ui.showdownConverter.makeHtml('# Work in progress...');
-      ui.transformedEditor.setValue('');
-      ui.markdownEditor.setValue('');
       if (urlsArray.length > 0) {
         const url = urlsArray.pop();
         const u = new URL(url, window.location.href);
         CONTENT_FRAME.src = u.pathname;
+
+        ui.markdownPreview.innerHTML = ui.showdownConverter.makeHtml('# Work in progress...');
+        ui.transformedEditor.setValue('');
+        ui.markdownEditor.setValue('');
       } else {
         CONTENT_FRAME.removeEventListener('transformation-complete', processNext);
       }

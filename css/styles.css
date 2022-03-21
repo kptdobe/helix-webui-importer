@@ -69,10 +69,6 @@
   min-width: 300px;
 }
 
-.container .transformer {
-  /* width: 40%; */
-}
-
 .tabs {
   width: 100%;
   background-color: var(--hlx-importer-tab-bg);
