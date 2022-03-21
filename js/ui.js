@@ -68,6 +68,15 @@ const updateUI = (out, includeDocx) => {
 };
 
 const attachListeners = () => {
+  config.importer.addListener(async (out) => {
+    const includeDocx = !!out.docx;
+    updateUI(out, includeDocx);
+    if (includeDocx) {
+      const { docx, filename } = out;
+      await saveFile(dirHandle, filename, docx);
+    }
+  });
+
   CONTENT_FRAME.addEventListener('load', async () => {
     const includeDocx = !!dirHandle;
 
@@ -76,13 +85,9 @@ const attachListeners = () => {
         config.importer.setTransformationInput({
           url: CONTENT_FRAME.contentDocument.location.href,
           document: CONTENT_FRAME.contentDocument,
+          includeDocx,
         });
-        const out = await config.importer.transform(includeDocx);
-        updateUI(out, includeDocx);
-        if (includeDocx) {
-          const { docx, filename } = out;
-          await saveFile(dirHandle, filename, docx);
-        }
+        await config.importer.transform();
       } catch (error) {
         // eslint-disable-next-line no-console
         console.error(`Cannot transform ${CONTENT_FRAME.contentDocument.location.href}`, error);

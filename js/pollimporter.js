@@ -19,15 +19,17 @@ export default class PollImporter {
       ...cfg,
     };
     this.poll = this.config.poll;
+    this.listeners = [];
+    this.transformation = {};
 
-    this.init();
+    this.#init();
   }
 
-  async init() {
+  async #init() {
     const $this = this;
     const loadModule = async (projectTransformFileURL) => {
       try {
-        const mod = await import(`${projectTransformFileURL}?cf=${new Date().getTime()}`);
+        const mod = await import(projectTransformFileURL);
         if (mod.default) {
           this.projectTransform = mod.default;
         }
@@ -37,7 +39,7 @@ export default class PollImporter {
       }
     };
     const poll = async () => {
-      const projectTransformFileURL = this.config.importFileURL;
+      const projectTransformFileURL = `${this.config.importFileURL}?cf=${new Date().getTime()}`;
       try {
         const res = await fetch(projectTransformFileURL);
         const body = await res.text();
@@ -45,7 +47,7 @@ export default class PollImporter {
         if (body !== $this.lastProjectTransformFileBody) {
           $this.lastProjectTransformFileBody = body;
           await loadModule(projectTransformFileURL);
-          if ($this.transformationURL && $this.transformationDocument) {
+          if ($this.transformation.url && $this.transformation.document) {
             $this.transform();
           }
         }
@@ -54,7 +56,7 @@ export default class PollImporter {
           // eslint-disable-next-line no-console
           console.warn('failed to poll project transform module', err);
           $this.lastProjectTransformFileBody = 'nofilefound';
-          if ($this.transformationURL && $this.transformationDocument) {
+          if ($this.transformation.url && $this.transformation.document) {
             $this.transform();
           }
         }
@@ -67,12 +69,12 @@ export default class PollImporter {
     }
   }
 
-  async transform(includeDocx = false) {
+  async transform() {
     let out;
-    if (includeDocx) {
+    if (this.transformation.includeDocx) {
       out = await WebImporter.html2docx(
-        this.transformationURL,
-        this.transformationDocument,
+        this.transformation.url,
+        this.transformation.document,
         this.projectTransform,
       );
 
@@ -80,17 +82,26 @@ export default class PollImporter {
       out.filename = `${path}.docx`;
     } else {
       out = await WebImporter.html2md(
-        this.transformationURL,
-        this.transformationDocument,
+        this.transformation.url,
+        this.transformation.document,
         this.projectTransform,
       );
     }
 
-    return out;
+    this.listeners.forEach((listener) => {
+      listener(out);
+    });
   }
 
-  setTransformationInput({ url, document }) {
-    this.transformationURL = url;
-    this.transformationDocument = document;
+  setTransformationInput({ url, document, includeDocx = false }) {
+    this.transformation = {
+      url,
+      document,
+      includeDocx,
+    };
+  }
+
+  addListener(listener) {
+    this.listeners.push(listener);
   }
 }
