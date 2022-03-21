@@ -69,7 +69,7 @@ body {
 }
 
 h2 {
-  margin: 10px 4px;
+  margin: 10px 30px;
 }
 
 .hidden {
@@ -144,8 +144,7 @@ h2 {
 
 #urls {
   width: calc(100% - 20px);
-  height: 260px;
-  /* height: 40px; */
+  height: 422px;
 }
 
 .container .actions label {
