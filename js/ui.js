@@ -121,9 +121,9 @@ const attachListeners = () => {
         const url = urlsArray.pop();
         let u;
         if (config.hostReplace && config.hostReplace !== '') {
-          config.hostReplace = new URL(url, config.hostReplace);
+          u = new URL(url, config.hostReplace);
         } else {
-          config.hostReplace = new URL(url);
+          u = new URL(url);
         }
         CONTENT_FRAME.src = u.pathname;
 
