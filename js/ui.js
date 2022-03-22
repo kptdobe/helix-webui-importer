@@ -14,7 +14,6 @@ import { getDirectoryHandle, saveFile } from './filesystem.js';
 import PollImporter from './pollimporter.js';
 import { loadURLsFromRobots } from './sitemap.js';
 
-const CONTENT_FRAME = document.getElementById('contentFrame');
 const URLS_INPUT = document.getElementById('urls');
 const OPTION_FIELDS = document.querySelectorAll('.optionField');
 const IMPORT_BUTTON = document.getElementById('runImport');
@@ -74,9 +73,10 @@ const attachListeners = () => {
   config.importer.addListener(async (out) => {
     const includeDocx = !!out.docx;
     updateUI(out, includeDocx);
+    const frame = document.getElementById('contentFrame');
     const data = {
       status: 'success',
-      url: CONTENT_FRAME.dataset.originalUrl,
+      url: frame.dataset.originalUrl,
       path: out.path,
     }
     if (includeDocx) {
@@ -85,34 +85,6 @@ const attachListeners = () => {
       data.docx = filename;
     }
     importStatus.rows.push(data);
-  });
-
-  CONTENT_FRAME.addEventListener('load', async () => {
-    const includeDocx = !!dirHandle;
-
-    window.setTimeout(async () => {
-      const originalURL = CONTENT_FRAME.dataset.originalUrl;
-      const replacedURL = CONTENT_FRAME.contentDocument.location.href;
-      try {
-        config.importer.setTransformationInput({
-          url: replacedURL,
-          document: CONTENT_FRAME.contentDocument,
-          includeDocx,
-        });
-        importStatus.imported += 1;
-        await config.importer.transform();
-      } catch (error) {
-        // eslint-disable-next-line no-console
-        console.error(`Cannot transform ${originalURL}`, error);
-        importStatus.rows.push({
-          url: originalURL,
-          status: `Error: ${error.message}`,
-        });
-      }
-
-      const event = new Event('transformation-complete');
-      CONTENT_FRAME.dispatchEvent(event);
-    }, config.pageLoadTimeout);
   });
 
   IMPORT_BUTTON.addEventListener('click', (async () => {
@@ -143,18 +115,60 @@ const attachListeners = () => {
           const u = new URL(url);
           src = `${config.hostReplace}${u.pathname}${u.search}`;
         }
-        CONTENT_FRAME.dataset.originalUrl = url;
-        CONTENT_FRAME.src = src;
+
+        const frame = document.createElement('iframe');
+        frame.id = 'contentFrame';
+
+        const onLoad = async () => {
+          const includeDocx = !!dirHandle;
+      
+          window.setTimeout(async () => {
+            const originalURL = frame.dataset.originalUrl;
+            try {
+              const replacedURL = frame.contentDocument.location.href;
+              config.importer.setTransformationInput({
+                url: replacedURL,
+                document: frame.contentDocument,
+                includeDocx,
+              });
+              importStatus.imported += 1;
+              console.log(`Imported: ${importStatus.imported}`);
+              await config.importer.transform();
+            } catch (error) {
+              // eslint-disable-next-line no-console
+              console.error(`Cannot transform ${originalURL}`, error);
+              importStatus.rows.push({
+                url: originalURL,
+                status: `Error: ${error.message}`,
+              });
+            }
+      
+            const event = new Event('transformation-complete');
+            frame.dispatchEvent(event);
+          }, config.pageLoadTimeout || 1);
+        };
+
+        frame.addEventListener('load', onLoad);
+        frame.addEventListener('transformation-complete', processNext);
+
+        frame.dataset.originalUrl = url;
+        frame.src = src;
+
+        const current = document.getElementById('contentFrame');
+        current.removeEventListener('load', onLoad);
+        current.removeEventListener('transformation-complete', processNext);
+        
+        current.replaceWith(frame);
 
         ui.markdownPreview.innerHTML = ui.showdownConverter.makeHtml('# Import in progress...');
         ui.transformedEditor.setValue('');
         ui.markdownEditor.setValue('');
       } else {
-        CONTENT_FRAME.removeEventListener('transformation-complete', processNext);
+        const frame = document.getElementById('contentFrame');
+        frame.removeEventListener('transformation-complete', processNext);
         DOWNLOADREPORT_BUTTON.classList.remove('hidden');
       }
     };
-    CONTENT_FRAME.addEventListener('transformation-complete', processNext);
     processNext();
   }));
 
