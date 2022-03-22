@@ -75,8 +75,8 @@ const attachListeners = () => {
     updateUI(out, includeDocx);
     const frame = document.getElementById('contentFrame');
     const data = {
-      status: 'success',
-      url: frame.dataset.originalUrl,
+      status: 'Success',
+      url: frame.dataset.originalURL,
       path: out.path,
     }
     if (includeDocx) {
@@ -123,9 +123,9 @@ const attachListeners = () => {
           const includeDocx = !!dirHandle;
       
           window.setTimeout(async () => {
-            const originalURL = frame.dataset.originalUrl;
+            const originalURL = frame.dataset.originalURL;
+            const replacedURL = frame.dataset.replacedURL;
             try {
-              const replacedURL = frame.contentDocument.location.href;
               config.importer.setTransformationInput({
                 url: replacedURL,
                 document: frame.contentDocument,
@@ -137,10 +137,29 @@ const attachListeners = () => {
             } catch (error) {
               // eslint-disable-next-line no-console
               console.error(`Cannot transform ${originalURL}`, error);
-              importStatus.rows.push({
-                url: originalURL,
-                status: `Error: ${error.message}`,
-              });
+
+              // try to detect redirects
+              const res = await fetch(replacedURL);
+              if (res.ok) {
+                if (res.redirected) {
+                  importStatus.rows.push({
+                    url: originalURL,
+                    status: 'Redirect',
+                    redirect: res.url,
+                  });
+                } else {
+                  // fallback, probably transformation error
+                  importStatus.rows.push({
+                    url: originalURL,
+                    status: `Error: ${error.message}`,
+                  });
+                }
+              } else {
+                importStatus.rows.push({
+                  url: originalURL,
+                  status: `Invalid: ${res.status}`,
+                });
+              }
             }
       
             const event = new Event('transformation-complete');
@@ -151,7 +170,8 @@ const attachListeners = () => {
         frame.addEventListener('load', onLoad);
         frame.addEventListener('transformation-complete', processNext);
 
-        frame.dataset.originalUrl = url;
+        frame.dataset.originalURL = url;
+        frame.dataset.replacedURL = url;
         frame.src = src;
 
         const current = document.getElementById('contentFrame');
@@ -210,7 +230,7 @@ const attachListeners = () => {
   DOWNLOADREPORT_BUTTON.addEventListener('click', (async () => {
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet('Sheet 1');
-    worksheet.addRows([['URL', 'path', 'docx', 'status']].concat(importStatus.rows.map(({ url, path, docx, status }) => [url, path, docx || '', status])));
+    worksheet.addRows([['URL', 'path', 'docx', 'status', 'redirect']].concat(importStatus.rows.map(({ url, path, docx, status, redirect }) => [url, path, docx || '', status, redirect || ''])));
     const buffer = await workbook.xlsx.writeBuffer();
     const a = document.createElement('a');
     const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
