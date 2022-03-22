@@ -119,13 +119,12 @@ const attachListeners = () => {
     const processNext = () => {
       if (urlsArray.length > 0) {
         const url = urlsArray.pop();
-        let u;
+        let src = url;
         if (config.hostReplace && config.hostReplace !== '') {
-          u = new URL(url, config.hostReplace);
-        } else {
-          u = new URL(url);
+          const u = new URL(url);
+          src = `${config.hostReplace}${u.pathname}${u.search}`;
         }
-        CONTENT_FRAME.src = u.pathname;
+        CONTENT_FRAME.src = src;
 
         ui.markdownPreview.innerHTML = ui.showdownConverter.makeHtml('# Import in progress...');
         ui.transformedEditor.setValue('');
