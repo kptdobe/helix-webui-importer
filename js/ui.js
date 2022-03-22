@@ -22,9 +22,14 @@ const TABS_CONTAINER = document.querySelectorAll('.tabs-container');
 // const SAVEASWORD_BUTTON = document.getElementById('saveAsWord');
 const FOLDERNAME_SPAN = document.getElementById('folderName');
 const GETURLSFROMROBOTS_BUTTON = document.getElementById('getURLsFromRobots');
+const DOWNLOADREPORT_BUTTON = document.getElementById('downloadReport');
 
 const ui = {};
 const config = {};
+const importStatus = {
+  imported: 0,
+  rows: []
+};
 
 let dirHandle = null;
 
@@ -34,7 +39,7 @@ const setupUI = () => {
     mode: 'htmlmixed',
     theme: 'base16-dark',
   });
-  ui.transformedEditor.setSize('100%', '500');
+  ui.transformedEditor.setSize('100%', '460');
 
   ui.markdownSource = document.getElementById('markdownSource');
   ui.markdownEditor = CodeMirror.fromTextArea(ui.markdownSource, {
@@ -42,7 +47,7 @@ const setupUI = () => {
     mode: 'markdown',
     theme: 'base16-dark',
   });
-  ui.markdownEditor.setSize('100%', '500');
+  ui.markdownEditor.setSize('100%', '460');
 
   ui.showdownConverter = new showdown.Converter();
   ui.markdownPreview = document.getElementById('markdownPreview');
@@ -63,36 +68,46 @@ const updateUI = (out) => {
     t.removeAttribute('class');
     t.removeAttribute('style');
   });
-
-  // if (!includeDocx) {
-  //   SAVEASWORD_BUTTON.classList.remove('hidden');
-  // }
 };
 
 const attachListeners = () => {
   config.importer.addListener(async (out) => {
     const includeDocx = !!out.docx;
     updateUI(out, includeDocx);
+    const data = {
+      status: 'success',
+      url: CONTENT_FRAME.dataset.originalUrl,
+      path: out.path,
+    }
     if (includeDocx) {
       const { docx, filename } = out;
       await saveFile(dirHandle, filename, docx);
+      data.docx = filename;
     }
+    importStatus.rows.push(data);
   });
 
   CONTENT_FRAME.addEventListener('load', async () => {
     const includeDocx = !!dirHandle;
 
     window.setTimeout(async () => {
+      const originalURL = CONTENT_FRAME.dataset.originalUrl;
+      const replacedURL = CONTENT_FRAME.contentDocument.location.href;
       try {
         config.importer.setTransformationInput({
-          url: CONTENT_FRAME.contentDocument.location.href,
+          url: replacedURL,
           document: CONTENT_FRAME.contentDocument,
           includeDocx,
         });
+        importStatus.imported += 1;
         await config.importer.transform();
       } catch (error) {
         // eslint-disable-next-line no-console
-        console.error(`Cannot transform ${CONTENT_FRAME.contentDocument.location.href}`, error);
+        console.error(`Cannot transform ${originalURL}`, error);
+        importStatus.rows.push({
+          url: originalURL,
+          status: `Error: ${error.message}`,
+        });
       }
 
       const event = new Event('transformation-complete');
@@ -115,6 +130,10 @@ const attachListeners = () => {
       }
     }
 
+    DOWNLOADREPORT_BUTTON.classList.add('hidden');
+    importStatus.imported = 0;
+    importStatus.rows = [];
+
     const urlsArray = URLS_INPUT.value.split('\n').reverse().filter((u) => u.trim() !== '');
     const processNext = () => {
       if (urlsArray.length > 0) {
@@ -124,6 +143,7 @@ const attachListeners = () => {
           const u = new URL(url);
           src = `${config.hostReplace}${u.pathname}${u.search}`;
         }
+        CONTENT_FRAME.dataset.originalUrl = url;
         CONTENT_FRAME.src = src;
 
         ui.markdownPreview.innerHTML = ui.showdownConverter.makeHtml('# Import in progress...');
@@ -131,6 +151,7 @@ const attachListeners = () => {
         ui.markdownEditor.setValue('');
       } else {
         CONTENT_FRAME.removeEventListener('transformation-complete', processNext);
+        DOWNLOADREPORT_BUTTON.classList.remove('hidden');
       }
     };
     CONTENT_FRAME.addEventListener('transformation-complete', processNext);
@@ -172,16 +193,17 @@ const attachListeners = () => {
     });
   });
 
-  // SAVEASWORD_BUTTON.addEventListener('click', (async () => {
-  //   const { docx, filename } = await config.importer.transform(true);
-
-  //   const a = document.createElement('a');
-  // const blob = new Blob([docx],
-  // { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
-  //   a.setAttribute('href', URL.createObjectURL(blob));
-  //   a.setAttribute('download', filename);
-  //   a.click();
-  // }));
+  DOWNLOADREPORT_BUTTON.addEventListener('click', (async () => {
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Sheet 1');
+    worksheet.addRows([['URL', 'path', 'docx', 'status']].concat(importStatus.rows.map(({ url, path, docx, status }) => [url, path, docx || '', status])));
+    const buffer = await workbook.xlsx.writeBuffer();
+    const a = document.createElement('a');
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    a.setAttribute('href', URL.createObjectURL(blob));
+    a.setAttribute('download', 'report.xlsx');
+    a.click();
+  }));
 
   GETURLSFROMROBOTS_BUTTON.addEventListener('click', (async () => {
     const urls = await loadURLsFromRobots(config.hostReplace);

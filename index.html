@@ -16,10 +16,10 @@
             <div data-panel="actions">
               <label for="urls">URL(s):</label>
               <textarea id="urls" rows="2" cols="50" class="optionField" placeholder="Paste a URL here"></textarea>
-              <button id="runImport">Import</button>
-              <!-- <button id="loadFromRobots">Load URLs from robots</button> -->
-              <!-- <button class="hidden" id="saveAsWord">Download current as Word</button> -->
-              <span class="hidden" id="folderName"></span>
+              <div class="toolbar">
+                <button id="runImport">Import</button>
+                <span class="hidden" id="folderName"></span>
+              </div>
             </div>
             <div data-panel="options" class="hidden">
               <div class="options-form">
@@ -65,6 +65,9 @@
             </div>
             <div data-panel="html" class="code hidden">
               <textarea id="transformed" rows="4" cols="10"></textarea>
+            </div>
+            <div class="toolbar">
+              <button class="hidden" id="downloadReport">Download report</button>
             </div>
           </div>
         </div>
