@@ -135,19 +135,19 @@ const attachListeners = () => {
               console.log(`Imported: ${importStatus.imported}`);
               await config.importer.transform();
             } catch (error) {
-              // eslint-disable-next-line no-console
-              console.error(`Cannot transform ${originalURL}`, error);
-
               // try to detect redirects
               const res = await fetch(replacedURL);
               if (res.ok) {
                 if (res.redirected) {
+                  console.error(`Cannot transform ${originalURL} - redirected to ${res.url}`, error);
                   importStatus.rows.push({
                     url: originalURL,
                     status: 'Redirect',
                     redirect: res.url,
                   });
                 } else {
+                  // eslint-disable-next-line no-console
+                  console.error(`Cannot transform ${originalURL} - transformation error ?`, error);
                   // fallback, probably transformation error
                   importStatus.rows.push({
                     url: originalURL,
@@ -155,6 +155,8 @@ const attachListeners = () => {
                   });
                 }
               } else {
+                // eslint-disable-next-line no-console
+                console.error(`Cannot transform ${originalURL} - page may not exist (status ${res.status})`, error);
                 importStatus.rows.push({
                   url: originalURL,
                   status: `Invalid: ${res.status}`,
