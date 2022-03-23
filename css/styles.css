@@ -217,6 +217,10 @@ h2 {
   padding: 0 16px 0 10px;
 }
 
+#markdownPreview h2 {
+  margin: unset;
+}
+
 #markdownPreview img {
   max-width: 100%;
 }
