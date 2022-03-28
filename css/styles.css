@@ -184,7 +184,7 @@ h2 {
 
 /* transformer panel */
 
-.transformer {
+.result {
   color: var(--hlx-importer-color);
   width: 100vw;
   min-height: 460px;
@@ -200,7 +200,6 @@ h2 {
   position: relative;
   margin: 2px;
 }
-
 
 #markdownPreview {
   flex: 1 1 auto;
@@ -252,6 +251,27 @@ h2 {
 
 .transformer .toolbar {
   padding-left: 10px;
+}
+
+/* crawler */
+
+#crawledURLs {
+  padding: 10px;
+  overflow: hidden;
+  overflow-y: scroll;
+  height: 440px;
+}
+
+#crawledURLs a {
+  font-family: var(--hlx-importer-font-family);
+  font-size: var(--hlx-importer-font-size);
+  line-height: var(--hlx-importer-line-height);
+  color: var(--hlx-importer-color);
+}
+
+.crawler .toolbar {
+  padding-left: 10px;
+  padding-bottom: 10px;
 }
 
 /* buttons */

@@ -14,19 +14,32 @@ import { getDirectoryHandle, saveFile } from './filesystem.js';
 import PollImporter from './pollimporter.js';
 import { loadURLsFromRobots } from './sitemap.js';
 
+const TRANSFORMER_CONTAINER = document.querySelector('.transformer');
+const CRAWLER_CONTAINER = document.querySelector('.crawler');
+
 const URLS_INPUT = document.getElementById('urls');
 const OPTION_FIELDS = document.querySelectorAll('.optionField');
 const IMPORT_BUTTON = document.getElementById('runImport');
+const CRAWL_BUTTON = document.getElementById('runCrawl');
+const PROCESS_BUTTONS = document.querySelectorAll('#runImport, #runCrawl');
 const TABS_CONTAINER = document.querySelectorAll('.tabs-container');
 // const SAVEASWORD_BUTTON = document.getElementById('saveAsWord');
 const FOLDERNAME_SPAN = document.getElementById('folderName');
 const GETURLSFROMROBOTS_BUTTON = document.getElementById('getURLsFromRobots');
-const DOWNLOADREPORT_BUTTON = document.getElementById('downloadReport');
+const DOWNLOAD_IMPORT_REPORT_BUTTON = document.getElementById('downloadImportReport');
+const DOWNLOAD_CRAWL_REPORT_BUTTON = document.getElementById('downloadCrawlReport');
+const CRAWED_URLS_HEADING = document.querySelector('#crawledURLs h3');
+const CRAWED_URLS_LIST = document.querySelector('#crawledURLs ul');
 
 const ui = {};
 const config = {};
 const importStatus = {
   imported: 0,
+  rows: []
+};
+
+const crawlStatus = {
+  crawled: 0,
   rows: []
 };
 
@@ -53,7 +66,7 @@ const setupUI = () => {
   ui.markdownPreview.innerHTML = ui.showdownConverter.makeHtml('# Run an import to see some markdown.');
 };
 
-const updateUI = (out) => {
+const updateImporterUI = (out) => {
   const { md, html: outputHTML } = out;
 
   ui.transformedEditor.setValue(html_beautify(outputHTML));
@@ -69,10 +82,34 @@ const updateUI = (out) => {
   });
 };
 
+const updateCrawlerUI = (url) => {
+  const a = document.createElement('a');
+  a.href = url;
+  a.textContent = url;
+  a.target = '_blank';
+  const li = document.createElement('li');
+  li.append(a);
+  CRAWED_URLS_LIST.append(li);
+
+  CRAWED_URLS_HEADING.innerText = `Site URLs (${crawlStatus.crawled}):`
+}
+
+const disableProcessButtons = () => {
+  PROCESS_BUTTONS.forEach((button) => {
+    button.disabled = true;
+  });
+};
+
+const enableProcessButtons = () => {
+  PROCESS_BUTTONS.forEach((button) => {
+    button.disabled = false;
+  });
+};
+
 const attachListeners = () => {
   config.importer.addListener(async (out) => {
     const includeDocx = !!out.docx;
-    updateUI(out, includeDocx);
+    updateImporterUI(out, includeDocx);
     const frame = document.getElementById('contentFrame');
     const data = {
       status: 'Success',
@@ -88,6 +125,9 @@ const attachListeners = () => {
   });
 
   IMPORT_BUTTON.addEventListener('click', (async () => {
+    TRANSFORMER_CONTAINER.classList.remove('hidden');
+    CRAWLER_CONTAINER.classList.add('hidden');
+    disableProcessButtons();
     if (config.localSave && !dirHandle) {
       try {
         dirHandle = await getDirectoryHandle();
@@ -102,7 +142,7 @@ const attachListeners = () => {
       }
     }
 
-    DOWNLOADREPORT_BUTTON.classList.add('hidden');
+    DOWNLOAD_IMPORT_REPORT_BUTTON.classList.add('hidden');
     importStatus.imported = 0;
     importStatus.rows = [];
 
@@ -173,7 +213,7 @@ const attachListeners = () => {
         frame.addEventListener('transformation-complete', processNext);
 
         frame.dataset.originalURL = url;
-        frame.dataset.replacedURL = url;
+        frame.dataset.replacedURL = src;
         frame.src = src;
 
         const current = document.getElementById('contentFrame');
@@ -188,7 +228,131 @@ const attachListeners = () => {
       } else {
         const frame = document.getElementById('contentFrame');
         frame.removeEventListener('transformation-complete', processNext);
-        DOWNLOADREPORT_BUTTON.classList.remove('hidden');
+        DOWNLOAD_IMPORT_REPORT_BUTTON.classList.remove('hidden');
+        enableProcessButtons();
+      }
+    };
+    processNext();
+  }));
+
+  CRAWL_BUTTON.addEventListener('click', (async () => {
+    CRAWLER_CONTAINER.classList.remove('hidden');
+    TRANSFORMER_CONTAINER.classList.add('hidden');
+    disableProcessButtons();
+    DOWNLOAD_CRAWL_REPORT_BUTTON.classList.add('hidden');
+    crawlStatus.crawled = 0;
+    crawlStatus.rows = [];
+    crawlStatus.urls = [];
+
+    const urlsArray = URLS_INPUT.value.split('\n').reverse().filter((u) => u.trim() !== '');
+    const processNext = () => {
+      if (urlsArray.length > 0) {
+        const url = urlsArray.pop();
+        let src = url;
+        if (config.hostReplace && config.hostReplace !== '') {
+          const u = new URL(url);
+          src = `${config.hostReplace}${u.pathname}${u.search}`;
+        }
+
+        const frame = document.createElement('iframe');
+        frame.id = 'contentFrame';
+
+        const onLoad = async () => {
+          window.setTimeout(async () => {
+            const current = frame.dataset.originalURL;
+            const originalURL = new URL(current);
+            const replacedURL = new URL(frame.dataset.replacedURL);
+
+            try {
+              const links = frame.contentDocument.querySelectorAll('a') || [];
+              let nbLinks = 0;
+              let nbLinksExternalHost = 0;
+              let nbLinksAlreadyProcessed = 0;
+              let linksToFollow = []
+              links.forEach((a) => {
+                nbLinks += 1;
+                if (a.href) {
+                  const u = new URL(a.href);
+                  if (u.host === originalURL.host || u.host === replacedURL.host) {
+                    const found = `${originalURL.origin}${u.pathname}${u.search}`;
+                    if (!crawlStatus.urls.includes(found) && !urlsArray.includes(found) && current !== found) {
+                      urlsArray.push(found);
+                      linksToFollow.push(found);
+                    } else {
+                      nbLinksAlreadyProcessed += 1; 
+                    }
+                  } else {
+                    nbLinksExternalHost += 1;
+                  }
+                }
+              });
+              
+              
+              crawlStatus.urls.push(current);
+              const row = {
+                url: current,
+                status: 'Success',
+                nbLinks,
+                nbLinksAlreadyProcessed,
+                nbLinksExternalHost,
+                nbLinksToFollow: linksToFollow.length,
+                linksToFollow,
+              };
+              crawlStatus.rows.push(row);
+            
+              crawlStatus.crawled += 1;
+
+              updateCrawlerUI(current);
+            } catch (error) {
+              // try to detect redirects
+              const res = await fetch(replacedURL);
+              if (res.ok) {
+                if (res.redirected) {
+                  console.error(`Cannot crawl ${originalURL} - redirected to ${res.url}`, error);
+                  crawlStatus.rows.push({
+                    url: originalURL,
+                    status: 'Redirect',
+                    redirect: res.url,
+                  });
+                } else {
+                  console.error(`Cannot crawl ${originalURL} - probably a code error on ${res.url}`, error);
+                  crawlStatus.rows.push({
+                    url: originalURL,
+                    status: `Code error: ${res.status}`,
+                  });
+                }
+              } else {
+                // eslint-disable-next-line no-console
+                console.error(`Cannot crawl ${originalURL} - page may not exist (status ${res.status})`, error);
+                crawlStatus.rows.push({
+                  url: originalURL,
+                  status: `Invalid: ${res.status}`,
+                });
+              }
+            }
+      
+            const event = new Event('crawling-complete');
+            frame.dispatchEvent(event);
+          }, config.pageLoadTimeout || 1);
+        };
+
+        frame.addEventListener('load', onLoad);
+        frame.addEventListener('crawling-complete', processNext);
+
+        frame.dataset.originalURL = url;
+        frame.dataset.replacedURL = src;
+        frame.src = src;
+
+        const current = document.getElementById('contentFrame');
+        current.removeEventListener('load', onLoad);
+        current.removeEventListener('crawling-complete', processNext);
+        
+        current.replaceWith(frame);
+      } else {
+        const frame = document.getElementById('contentFrame');
+        frame.removeEventListener('crawling-complete', processNext);
+        DOWNLOAD_CRAWL_REPORT_BUTTON.classList.remove('hidden');
+        enableProcessButtons();
       }
     };
     processNext();
@@ -229,7 +393,7 @@ const attachListeners = () => {
     });
   });
 
-  DOWNLOADREPORT_BUTTON.addEventListener('click', (async () => {
+  DOWNLOAD_IMPORT_REPORT_BUTTON.addEventListener('click', (async () => {
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet('Sheet 1');
     worksheet.addRows([['URL', 'path', 'docx', 'status', 'redirect']].concat(importStatus.rows.map(({ url, path, docx, status, redirect }) => [url, path, docx || '', status, redirect || ''])));
@@ -237,7 +401,21 @@ const attachListeners = () => {
     const a = document.createElement('a');
     const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
     a.setAttribute('href', URL.createObjectURL(blob));
-    a.setAttribute('download', 'report.xlsx');
+    a.setAttribute('download', 'import_report.xlsx');
+    a.click();
+  }));
+
+  DOWNLOAD_CRAWL_REPORT_BUTTON.addEventListener('click', (async () => {
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Sheet 1');
+    worksheet.addRows([['URL', 'status', 'redirect', 'Nb links on page', 'Nb links already processed', 'Nb links on external host', 'Nb links to follow', 'Links to follow']].concat(crawlStatus.rows.map(({
+      url, status, redirect, nbLinks, nbLinksAlreadyProcessed, nbLinksExternalHost, nbLinksToFollow,  linksToFollow }) => [
+      url, status, redirect || '', nbLinks || '', nbLinksAlreadyProcessed || '', nbLinksExternalHost || '', nbLinksToFollow || '', linksToFollow ? linksToFollow.join(', ') : ''])));
+    const buffer = await workbook.xlsx.writeBuffer();
+    const a = document.createElement('a');
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    a.setAttribute('href', URL.createObjectURL(blob));
+    a.setAttribute('download', 'crawl_report.xlsx');
     a.click();
   }));
 

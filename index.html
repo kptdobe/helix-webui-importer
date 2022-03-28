@@ -18,6 +18,7 @@
               <textarea id="urls" rows="2" cols="50" class="optionField" placeholder="Paste a URL here"></textarea>
               <div class="toolbar">
                 <button id="runImport">Import</button>
+                <button id="runCrawl">Crawl</button>
                 <span class="hidden" id="folderName"></span>
               </div>
             </div>
@@ -51,28 +52,47 @@
         <h2>Page preview</h2>
         <iframe id="contentFrame" src=""></iframe>
       </div>
-      <div class="transformer hlx-importer">
-        <div class="tabs-container">
-          <div class="tabs">
-            <div class="active tab" data-tab="markdown">Markdown</div>
-            <div class="tab" data-tab="source">Source</div>
-            <div class="tab" data-tab="html">HTML</div>
+      <div class="result">
+        <div class="transformer">
+          <div class="tabs-container">
+            <div class="tabs">
+              <div class="active tab" data-tab="markdown">Markdown</div>
+              <div class="tab" data-tab="source">Source</div>
+              <div class="tab" data-tab="html">HTML</div>
+            </div>
+            <div class="panels">
+              <div data-panel="markdown" id="markdownPreview"></div>
+              <div data-panel="source" class="code hidden">
+                <textarea id="markdownSource" rows="4" cols="10"></textarea>
+              </div>
+              <div data-panel="html" class="code hidden">
+                <textarea id="transformed" rows="4" cols="10"></textarea>
+              </div>
+              <div class="toolbar">
+                <button class="hidden" id="downloadImportReport">Download import report</button>
+              </div>
+            </div>
           </div>
-          <div class="panels">
-            <div data-panel="markdown" id="markdownPreview"></div>
-            <div data-panel="source" class="code hidden">
-              <textarea id="markdownSource" rows="4" cols="10"></textarea>
+        </div>
+        <div class="crawler hidden">
+          <div class="tabs-container">
+            <div class="tabs">
+              <div class="active tab" data-tab="crawled">URLs</div>
             </div>
-            <div data-panel="html" class="code hidden">
-              <textarea id="transformed" rows="4" cols="10"></textarea>
-            </div>
-            <div class="toolbar">
-              <button class="hidden" id="downloadReport">Download report</button>
+            <div class="panels">
+              <div data-panel="crawled" id="crawledURLs">
+                <h3>Site URLs:</h3>
+                <ul></ul>
+              </div>
+              <div class="toolbar">
+                <button class="hidden" id="downloadCrawlReport">Download crawl report</button>
+              </div>
             </div>
           </div>
         </div>
       </div>
     </div>
+  </div>
     <script src="./js/libs/vendors/codemirror/codemirror.js"></script>
     <script src="./js/libs/vendors/codemirror/xml.js"></script>
     <script src="./js/libs/vendors/codemirror/javascript.js"></script>
