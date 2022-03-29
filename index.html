@@ -1,98 +1,122 @@
 <html>
-  <head>
+
+<head>
     <!-- TODO: remove - livereload script is useful during dev but should be removed afterward -->
     <!-- <script src="/__internal__/livereload.js"></script> -->
     <link rel="stylesheet" href="./css/styles.css">
-  </head>
-  <body>
+</head>
+
+<body>
+    <header class="header">
+        <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 216 216'>
+        <circle fill="#f15a3a" cx='22.5' cy='108' r='22.5'/>
+        <circle fill="#f15a3a" cx='193.5' cy='108' r='22.5'/>
+        <circle fill="#c71f3d" cx='63' cy='27' r='27'/>
+        <circle fill="#ffc40c" cx='162' cy='27' r='18'/>
+        <circle fill="#c71f3d" cx='162' cy='189' r='27'/>
+        <circle fill="#ffc40c" cx='63' cy='189' r='18'/>
+      </svg>
+        <h1 class="title">Helix Web Importer</h1>
+    </header>
     <div class="container">
-      <div class="actions">
-        <div class="tabs-container">
-          <div class="tabs">
-            <div class="active tab" data-tab="actions">Actions</div>
-            <div class="tab" data-tab="options">Options</div>
-          </div>
-          <div class="panels">
-            <div data-panel="actions">
-              <label for="urls">URL(s):</label>
-              <textarea id="urls" rows="2" cols="50" class="optionField" placeholder="Paste a URL here"></textarea>
-              <div class="toolbar">
-                <button id="runImport">Import</button>
-                <button id="runCrawl">Crawl</button>
-                <span class="hidden" id="folderName"></span>
-              </div>
+        <div title="Drag to resize or double-click to expand" class="resizer resizer-actions"></div>
+        <div class="actions">
+            <div class="tabs-container">
+                <div class="tabs">
+                    <div class="active tab" data-tab="actions">Actions</div>
+                    <div class="tab" data-tab="options">Options</div>
+                </div>
+                <div class="panels">
+                    <div data-panel="actions">
+                        <label for="urls">URL(s):</label>
+                        <textarea id="urls" rows="5" cols="50" class="optionField" placeholder="Paste URL(s) here..."></textarea>
+                        <div class="toolbar">
+                            <button id="runImport">Import</button>
+                            <button id="runCrawl">Crawl</button>
+                            <span class="hidden" id="folderName"></span>
+                        </div>
+                    </div>
+                    <div data-panel="options" class="hidden">
+                        <div class="options-form">
+                            <div>
+                                <label for="localSave">Local save as docx:</label>
+                                <input id="localSave" type="checkbox" class="optionField" checked>
+                            </div>
+                            <div>
+                                <label for="importFileURL">Import file URL:</label>
+                                <input id="importFileURL" type="text" class="optionField" value="http://localhost:3000/tools/importer/import.js">
+                            </div>
+                            <div>
+                                <label for="pageLoadTimeout">Page load timeout:</label>
+                                <input id="pageLoadTimeout" type="text" class="optionField" value="2000">
+                            </div>
+                            <div>
+                                <label for="hostReplace">Host replace:</label>
+                                <input id="hostReplace" type="text" class="optionField" value="http://localhost:3000">
+                            </div>
+                            <button id="getURLsFromRobots">Download list of URLs from robots.txt</button>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div data-panel="options" class="hidden">
-              <div class="options-form">
-                <div>
-                  <label for="localSave">Local save as docx:</label>
-                  <input id="localSave" type="checkbox" class="optionField" checked>
-                </div>
-                <div>
-                  <label for="importFileURL">Import file URL:</label>
-                  <input id="importFileURL" type="text" class="optionField" value="http://localhost:3000/tools/importer/import.js">
-                </div>
-                <div>
-                  <label for="pageLoadTimeout">Page load timeout:</label>
-                  <input id="pageLoadTimeout" type="text" class="optionField" value="2000">
-                </div>
-                <div>
-                  <label for="hostReplace">Host replace:</label>
-                  <input id="hostReplace" type="text" class="optionField" value="http://localhost:3000">
-                </div>
-                <button id="getURLsFromRobots">Download list of URLs from robots.txt</button>
-              </div>
+            <div>
             </div>
-          </div>
         </div>
-        <div>
-      </div>
-      </div>
-      <div class="frame">
-        <h2>Page preview</h2>
-        <iframe id="contentFrame" src=""></iframe>
-      </div>
-      <div class="result">
-        <div class="transformer">
-          <div class="tabs-container">
-            <div class="tabs">
-              <div class="active tab" data-tab="markdown">Markdown</div>
-              <div class="tab" data-tab="source">Source</div>
-              <div class="tab" data-tab="html">HTML</div>
+        <div title="Drag to resize or double-click to expand" class="resizer resizer-frame"></div>
+        <div class="frame">
+            <div class="tabs-container">
+                <div class="tabs">
+                    <div class="active tab" data-tab="pagePreview">Page Preview</div>
+                </div>
+                <div class="panels">
+                    <div data-panel="pagePreview" id="pagePreview">
+                        <iframe id="contentFrame" src=""></iframe>
+                    </div>
+                </div>
             </div>
-            <div class="panels">
-              <div data-panel="markdown" id="markdownPreview"></div>
-              <div data-panel="source" class="code hidden">
-                <textarea id="markdownSource" rows="4" cols="10"></textarea>
-              </div>
-              <div data-panel="html" class="code hidden">
-                <textarea id="transformed" rows="4" cols="10"></textarea>
-              </div>
-              <div class="toolbar">
-                <button class="hidden" id="downloadImportReport">Download import report</button>
-              </div>
-            </div>
-          </div>
         </div>
-        <div class="crawler hidden">
-          <div class="tabs-container">
-            <div class="tabs">
-              <div class="active tab" data-tab="crawled">URLs</div>
+        <div title="Drag to resize or double-click to expand" class="resizer resizer-result"></div>
+        <div class="result">
+            <div class="transformer">
+                <div class="tabs-container">
+                    <div class="tabs">
+                        <div class="active tab" data-tab="markdown">Markdown</div>
+                        <div class="tab" data-tab="source">Source</div>
+                        <div class="tab" data-tab="html">HTML</div>
+                    </div>
+                    <div class="panels">
+                        <div data-panel="markdown" id="markdownPreview"></div>
+                        <div data-panel="source" class="code hidden">
+                            <textarea id="markdownSource" rows="4" cols="10"></textarea>
+                        </div>
+                        <div data-panel="html" class="code hidden">
+                            <textarea id="transformed" rows="4" cols="10"></textarea>
+                        </div>
+                        <div class="toolbar">
+                            <button class="hidden" id="downloadImportReport">Download import report</button>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="panels">
-              <div data-panel="crawled" id="crawledURLs">
-                <h3>Site URLs:</h3>
-                <ul></ul>
-              </div>
-              <div class="toolbar">
-                <button class="hidden" id="downloadCrawlReport">Download crawl report</button>
-              </div>
+            <div class="crawler hidden">
+                <div class="tabs-container">
+                    <div class="tabs">
+                        <div class="active tab" data-tab="crawled">URLs</div>
+                    </div>
+                    <div class="panels">
+                        <div data-panel="crawled" id="crawledURLs">
+                            <h2>Site URLs:</h2>
+                            <ul></ul>
+                            <div class="toolbar">
+                                <button class="hidden" id="downloadCrawlReport">Download crawl report</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-          </div>
         </div>
-      </div>
     </div>
-  </div>
+    </div>
     <script src="./js/libs/vendors/codemirror/codemirror.js"></script>
     <script src="./js/libs/vendors/codemirror/xml.js"></script>
     <script src="./js/libs/vendors/codemirror/javascript.js"></script>
@@ -105,5 +129,6 @@
     <script src="./js/libs/vendors/exceljs/exceljs.min.js"></script>
     <script src="./js/libs/hlx/importer-bundle.js"></script>
     <script src="./js/ui.js" type="module"></script>
-  </body>
+</body>
+
 </html>
