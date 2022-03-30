@@ -276,9 +276,18 @@ body.aem .container > div[aria-expanded=false] .panels {
 }
 
 .transformer .code {
-  flex: 1 1 auto;
-  padding-top: 0;
   position: relative;
+  flex: 1 1 auto;
+  height: 100%;
+  padding-top: 0;
+}
+
+.transformer .CodeMirror {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
   height: 100%;
 }
 
@@ -287,20 +296,22 @@ body.aem .container > div[aria-expanded=false] .panels {
   padding-top: 1rem;
 }
 
+.transformer .code .cm-s-base16-dark.CodeMirror {
+  background: #1e1e1e;
+}
+
+.transformer .code .cm-s-base16-dark .CodeMirror-gutters {
+  background: #1e1e1e;
+}
+
 #markdownPreview {
-  /* flex: 1 1 auto; */
-  /* margin-top: 0; */
-  /* height: 460px; */
-  /* width: 100%; */
-  /* position: relative; */
-  /* overflow: scroll; */
-  /* overflow-x: hidden; */
-
-  /* background-color: white; */
-  /* color: black; */
-
-  /* padding: 0 16px 0 10px; */
+  position: relative;
+  flex: 1 1 auto;
+  width: 100%;
+  height: 100%;
   line-height: var(--hlx-importer-line-height);
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 #markdownPreview h2 {
@@ -327,15 +338,6 @@ body.aem .container > div[aria-expanded=false] .panels {
 
 #markdownPreview th {
   background: var(--hlx-importer-button-bg);
-}
-
-.transformer .CodeMirror {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 100%;
 }
 
 /* crawler */
