@@ -8,15 +8,25 @@
 
 <body>
     <header class="header">
-        <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 216 216'>
-        <circle fill="#f15a3a" cx='22.5' cy='108' r='22.5'/>
-        <circle fill="#f15a3a" cx='193.5' cy='108' r='22.5'/>
-        <circle fill="#c71f3d" cx='63' cy='27' r='27'/>
-        <circle fill="#ffc40c" cx='162' cy='27' r='18'/>
-        <circle fill="#c71f3d" cx='162' cy='189' r='27'/>
-        <circle fill="#ffc40c" cx='63' cy='189' r='18'/>
-      </svg>
-        <h1 class="title">Helix Web Importer</h1>
+        <div class="brand">
+            <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 216 216'>
+                <circle fill="#f15a3a" cx='22.5' cy='108' r='22.5'/>
+                <circle fill="#f15a3a" cx='193.5' cy='108' r='22.5'/>
+                <circle fill="#c71f3d" cx='63' cy='27' r='27'/>
+                <circle fill="#ffc40c" cx='162' cy='27' r='18'/>
+                <circle fill="#c71f3d" cx='162' cy='189' r='27'/>
+                <circle fill="#ffc40c" cx='63' cy='189' r='18'/>
+            </svg>
+            <h1 class="title">Helix Web Importer</h1>
+        </div>
+        <div class="slider-container">
+            <input type="range" min="0" max="2" value="0" class="slider" id="uiSlider">
+            <div class="slider-options">
+                <span>HLX</span>
+                <span>AEM</span>
+                <span>8-Bit</span>
+            </div>
+        </div>
     </header>
     <div class="container">
         <div title="Drag to resize or double-click to expand" class="resizer resizer-actions"></div>

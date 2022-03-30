@@ -30,6 +30,7 @@ const DOWNLOAD_IMPORT_REPORT_BUTTON = document.getElementById('downloadImportRep
 const DOWNLOAD_CRAWL_REPORT_BUTTON = document.getElementById('downloadCrawlReport');
 const CRAWLED_URLS_HEADING = document.querySelector('#crawledURLs h3');
 const CRAWLED_URLS_LIST = document.querySelector('#crawledURLs ul');
+const UI_SLIDER = document.getElementById('uiSlider');
 const MENUS = document.querySelectorAll('.container > div:not(.resizer)');
 const RESIZERS = document.querySelectorAll('.resizer');
 let mouseDown = false;
@@ -510,6 +511,12 @@ const attachListeners = () => {
       a.click();
     }
   }));
+
+  UI_SLIDER.addEventListener('change', (e) => {
+    const uis = ['hlx', 'aem', 'bit'];
+    const val = e.target.value;
+    document.body.classList = uis[val];
+  });
 };
 
 const init = () => {
