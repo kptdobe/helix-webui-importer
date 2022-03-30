@@ -28,19 +28,23 @@ const FOLDERNAME_SPAN = document.getElementById('folderName');
 const GETURLSFROMROBOTS_BUTTON = document.getElementById('getURLsFromRobots');
 const DOWNLOAD_IMPORT_REPORT_BUTTON = document.getElementById('downloadImportReport');
 const DOWNLOAD_CRAWL_REPORT_BUTTON = document.getElementById('downloadCrawlReport');
-const CRAWED_URLS_HEADING = document.querySelector('#crawledURLs h3');
-const CRAWED_URLS_LIST = document.querySelector('#crawledURLs ul');
+const CRAWLED_URLS_HEADING = document.querySelector('#crawledURLs h3');
+const CRAWLED_URLS_LIST = document.querySelector('#crawledURLs ul');
+const MENUS = document.querySelectorAll('.container > div:not(.resizer)');
+const RESIZERS = document.querySelectorAll('.resizer');
+let mouseDown = false;
+let mouseX = 0;
 
 const ui = {};
 const config = {};
 const importStatus = {
   imported: 0,
-  rows: []
+  rows: [],
 };
 
 const crawlStatus = {
   crawled: 0,
-  rows: []
+  rows: [],
 };
 
 let dirHandle = null;
@@ -51,7 +55,7 @@ const setupUI = () => {
     mode: 'htmlmixed',
     theme: 'base16-dark',
   });
-  ui.transformedEditor.setSize('100%', '460');
+  ui.transformedEditor.setSize('100%', '100%');
 
   ui.markdownSource = document.getElementById('markdownSource');
   ui.markdownEditor = CodeMirror.fromTextArea(ui.markdownSource, {
@@ -59,11 +63,11 @@ const setupUI = () => {
     mode: 'markdown',
     theme: 'base16-dark',
   });
-  ui.markdownEditor.setSize('100%', '460');
+  ui.markdownEditor.setSize('100%', '100%');
 
   ui.showdownConverter = new showdown.Converter();
   ui.markdownPreview = document.getElementById('markdownPreview');
-  ui.markdownPreview.innerHTML = ui.showdownConverter.makeHtml('# Run an import to see some markdown.');
+  ui.markdownPreview.innerHTML = ui.showdownConverter.makeHtml('Run an import to see some markdown _OR_ crawl a site for a full list of URLs.');
 };
 
 const updateImporterUI = (out) => {
@@ -89,10 +93,10 @@ const updateCrawlerUI = (url) => {
   a.target = '_blank';
   const li = document.createElement('li');
   li.append(a);
-  CRAWED_URLS_LIST.append(li);
+  CRAWLED_URLS_LIST.append(li);
 
-  CRAWED_URLS_HEADING.innerText = `Site URLs (${crawlStatus.crawled}):`
-}
+  CRAWLED_URLS_HEADING.innerText = `Site URLs (${crawlStatus.crawled}):`;
+};
 
 const disableProcessButtons = () => {
   PROCESS_BUTTONS.forEach((button) => {
@@ -115,7 +119,7 @@ const attachListeners = () => {
       status: 'Success',
       url: frame.dataset.originalURL,
       path: out.path,
-    }
+    };
     if (includeDocx) {
       const { docx, filename } = out;
       await saveFile(dirHandle, filename, docx);
@@ -161,10 +165,10 @@ const attachListeners = () => {
 
         const onLoad = async () => {
           const includeDocx = !!dirHandle;
-      
+
           window.setTimeout(async () => {
-            const originalURL = frame.dataset.originalURL;
-            const replacedURL = frame.dataset.replacedURL;
+            const { originalURL } = frame.dataset;
+            const { replacedURL } = frame.dataset;
             try {
               config.importer.setTransformationInput({
                 url: replacedURL,
@@ -172,6 +176,7 @@ const attachListeners = () => {
                 includeDocx,
               });
               importStatus.imported += 1;
+              // eslint-disable-next-line no-console
               console.log(`Imported: ${importStatus.imported}`);
               await config.importer.transform();
             } catch (error) {
@@ -179,6 +184,7 @@ const attachListeners = () => {
               const res = await fetch(replacedURL);
               if (res.ok) {
                 if (res.redirected) {
+                  // eslint-disable-next-line no-console
                   console.error(`Cannot transform ${originalURL} - redirected to ${res.url}`, error);
                   importStatus.rows.push({
                     url: originalURL,
@@ -203,7 +209,7 @@ const attachListeners = () => {
                 });
               }
             }
-      
+
             const event = new Event('transformation-complete');
             frame.dispatchEvent(event);
           }, config.pageLoadTimeout || 1);
@@ -219,10 +225,10 @@ const attachListeners = () => {
         const current = document.getElementById('contentFrame');
         current.removeEventListener('load', onLoad);
         current.removeEventListener('transformation-complete', processNext);
-        
+
         current.replaceWith(frame);
 
-        ui.markdownPreview.innerHTML = ui.showdownConverter.makeHtml('# Import in progress...');
+        ui.markdownPreview.innerHTML = ui.showdownConverter.makeHtml('Import in progress...');
         ui.transformedEditor.setValue('');
         ui.markdownEditor.setValue('');
       } else {
@@ -268,26 +274,26 @@ const attachListeners = () => {
               let nbLinks = 0;
               let nbLinksExternalHost = 0;
               let nbLinksAlreadyProcessed = 0;
-              let linksToFollow = []
+              const linksToFollow = [];
               links.forEach((a) => {
                 nbLinks += 1;
                 if (a.href) {
                   const u = new URL(a.href);
                   if (u.host === originalURL.host || u.host === replacedURL.host) {
                     const found = `${originalURL.origin}${u.pathname}${u.search}`;
+                    // eslint-disable-next-line max-len
                     if (!crawlStatus.urls.includes(found) && !urlsArray.includes(found) && current !== found) {
                       urlsArray.push(found);
                       linksToFollow.push(found);
                     } else {
-                      nbLinksAlreadyProcessed += 1; 
+                      nbLinksAlreadyProcessed += 1;
                     }
                   } else {
                     nbLinksExternalHost += 1;
                   }
                 }
               });
-              
-              
+
               crawlStatus.urls.push(current);
               const row = {
                 url: current,
@@ -299,7 +305,6 @@ const attachListeners = () => {
                 linksToFollow,
               };
               crawlStatus.rows.push(row);
-            
               crawlStatus.crawled += 1;
 
               updateCrawlerUI(current);
@@ -308,6 +313,7 @@ const attachListeners = () => {
               const res = await fetch(replacedURL);
               if (res.ok) {
                 if (res.redirected) {
+                  // eslint-disable-next-line no-console
                   console.error(`Cannot crawl ${originalURL} - redirected to ${res.url}`, error);
                   crawlStatus.rows.push({
                     url: originalURL,
@@ -315,6 +321,7 @@ const attachListeners = () => {
                     redirect: res.url,
                   });
                 } else {
+                  // eslint-disable-next-line no-console
                   console.error(`Cannot crawl ${originalURL} - probably a code error on ${res.url}`, error);
                   crawlStatus.rows.push({
                     url: originalURL,
@@ -330,7 +337,7 @@ const attachListeners = () => {
                 });
               }
             }
-      
+
             const event = new Event('crawling-complete');
             frame.dispatchEvent(event);
           }, config.pageLoadTimeout || 1);
@@ -346,7 +353,7 @@ const attachListeners = () => {
         const current = document.getElementById('contentFrame');
         current.removeEventListener('load', onLoad);
         current.removeEventListener('crawling-complete', processNext);
-        
+
         current.replaceWith(frame);
       } else {
         const frame = document.getElementById('contentFrame');
@@ -357,6 +364,51 @@ const attachListeners = () => {
     };
     processNext();
   }));
+
+  RESIZERS.forEach((resizer) => {
+    const prev = resizer.previousElementSibling;
+    const next = resizer.nextElementSibling;
+    resizer.ondblclick = () => {
+      MENUS.forEach((menu) => {
+        menu.style.flex = '0 0 0';
+        menu.setAttribute('aria-expanded', false);
+      });
+      next.style.flex = '0 1 100%';
+      next.setAttribute('aria-expanded', true);
+    };
+    if (prev && next) {
+      resizer.onmousedown = (down) => {
+        mouseDown = true;
+        mouseX = down.clientX;
+        resizer.parentNode.onmousemove = (move) => {
+          if (mouseDown) {
+            let maxWidth = -1;
+            [...MENUS, ...RESIZERS].forEach((menu) => { maxWidth += menu.offsetWidth; });
+            // eslint-disable-next-line no-nested-ternary
+            const direction = move.pageX < mouseX ? -(Math.abs(move.pageX - mouseX))
+              : move.pageX > mouseX ? Math.abs(move.pageX - mouseX)
+                : 0;
+            mouseX = move.clientX;
+            if (direction < 0) {
+              prev.style.flex = `1 0 ${prev.offsetWidth - Math.abs(direction)}px`;
+              next.style.flex = `0 1 ${next.offsetWidth + Math.abs(direction)}px`;
+              next.setAttribute('aria-expanded', true);
+            } else if (direction > 0 && maxWidth <= prev.parentNode.offsetWidth) {
+              prev.style.flex = `1 0 ${prev.offsetWidth + Math.abs(direction)}px`;
+              next.style.flex = `0 1 ${next.offsetWidth - Math.abs(direction)}px`;
+              prev.setAttribute('aria-expanded', true);
+            }
+          }
+        };
+      };
+      resizer.parentNode.onmouseup = () => {
+        if (mouseDown) {
+          mouseDown = false;
+          mouseX = 0;
+        }
+      };
+    }
+  });
 
   OPTION_FIELDS.forEach((field) => {
     field.addEventListener('change', () => {
@@ -396,7 +448,15 @@ const attachListeners = () => {
   DOWNLOAD_IMPORT_REPORT_BUTTON.addEventListener('click', (async () => {
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet('Sheet 1');
-    worksheet.addRows([['URL', 'path', 'docx', 'status', 'redirect']].concat(importStatus.rows.map(({ url, path, docx, status, redirect }) => [url, path, docx || '', status, redirect || ''])));
+    worksheet.addRows([
+      ['URL', 'path', 'docx', 'status', 'redirect'],
+    ].concat(importStatus.rows.map(({
+      url,
+      path,
+      docx,
+      status,
+      redirect,
+    }) => [url, path, docx || '', status, redirect || ''])));
     const buffer = await workbook.xlsx.writeBuffer();
     const a = document.createElement('a');
     const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
@@ -408,9 +468,21 @@ const attachListeners = () => {
   DOWNLOAD_CRAWL_REPORT_BUTTON.addEventListener('click', (async () => {
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet('Sheet 1');
-    worksheet.addRows([['URL', 'status', 'redirect', 'Nb links on page', 'Nb links already processed', 'Nb links on external host', 'Nb links to follow', 'Links to follow']].concat(crawlStatus.rows.map(({
-      url, status, redirect, nbLinks, nbLinksAlreadyProcessed, nbLinksExternalHost, nbLinksToFollow,  linksToFollow }) => [
-      url, status, redirect || '', nbLinks || '', nbLinksAlreadyProcessed || '', nbLinksExternalHost || '', nbLinksToFollow || '', linksToFollow ? linksToFollow.join(', ') : ''])));
+    worksheet.addRows([
+      ['URL', 'status', 'redirect', 'Nb links on page', 'Nb links already processed', 'Nb links on external host', 'Nb links to follow', 'Links to follow'],
+    ].concat(crawlStatus.rows.map(({
+      // eslint-disable-next-line max-len
+      url,
+      status,
+      redirect,
+      nbLinks,
+      nbLinksAlreadyProcessed,
+      nbLinksExternalHost,
+      nbLinksToFollow,
+      linksToFollow,
+    }) => [
+      url, status, redirect || '', nbLinks || '', nbLinksAlreadyProcessed || '', nbLinksExternalHost || '', nbLinksToFollow || '', linksToFollow ? linksToFollow.join(', ') : '',
+    ])));
     const buffer = await workbook.xlsx.writeBuffer();
     const a = document.createElement('a');
     const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
@@ -427,7 +499,9 @@ const attachListeners = () => {
     } else {
       const workbook = new ExcelJS.Workbook();
       const worksheet = workbook.addWorksheet('Sheet 1');
-      worksheet.addRows([['URL']].concat(urls.map((u) => [u])));
+      worksheet.addRows([
+        ['URL'],
+      ].concat(urls.map((u) => [u])));
       const buffer = await workbook.xlsx.writeBuffer();
       const a = document.createElement('a');
       const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
