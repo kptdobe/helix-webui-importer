@@ -14,6 +14,10 @@
   --hlx-importer-menu-bg: #EBEBEB;
   --hlx-importer-menu-border: #D6D6D6;
   --hlx-importer-menu-highlight: #C2C2C2;
+  --hlx-import-markdown-ff: Arial, Helvetica, sans-serif;
+  --hlx-import-markdown-bg: #f1f1f1;
+  --hlx-import-markdown-color: #0f0f0f;
+  --hlx-import-markdown-th-bg: #F4CCCD;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -247,6 +251,9 @@ h2 {
   line-height: var(--hlx-importer-line-height);
   overflow-x: hidden;
   overflow-y: auto;
+  color: var(--hlx-import-markdown-color);
+  background-color: var(--hlx-import-markdown-bg);
+  font-family: var(--hlx-import-markdown-ff);
 }
 
 #markdownPreview h2 {
@@ -263,7 +270,8 @@ h2 {
   max-width: 100%;
   border: 1px solid var(--hlx-importer-menu-highlight);
   border-collapse: collapse;
-  color: var(--hlx-importer-color);
+  color: var(--hlx-import-markdown-color);
+  font-family: var(--hlx-import-markdown-ff);
 }
 
 #markdownPreview table {
@@ -272,7 +280,7 @@ h2 {
 }
 
 #markdownPreview th {
-  background: var(--hlx-importer-button-bg);
+  background: var(--hlx-import-markdown-th-bg);
 }
 
 /* crawler */
