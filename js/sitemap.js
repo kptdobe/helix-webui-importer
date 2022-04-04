@@ -35,27 +35,28 @@ async function loadSitemap(sitemapURL) {
 
 async function loadURLsFromRobots(href) {
   let urls = [];
-  const url = new URL(href);
-  url.pathname = '/robots.txt';
-  url.search = '';
-  const res = await fetch(url.toString());
-  if (res.ok) {
-    const text = await res.text();
-    // eslint-disable-next-line no-console
-    console.log('found robots.txt', text);
-    const regex = /^[Ss]itemap:\s*(.*)$/gm;
-    let m;
-    const sitemaps = [];
-    // eslint-disable-next-line no-cond-assign
-    while ((m = regex.exec(text)) !== null) {
-      if (m.index === regex.lastIndex) {
-        regex.lastIndex += 1;
-      }
+  // const url = new URL(href);
+  // url.pathname = '/robots.txt';
+  // url.search = '';
+  // const res = await fetch(url.toString());
+  // if (res.ok) {
+  //   const text = await res.text();
+  //   // eslint-disable-next-line no-console
+  //   console.log('found robots.txt', text);
+  //   const regex = /^[Ss]itemap:\s*(.*)$/gm;
+  //   let m;
+  //   const sitemaps = [];
+  //   // eslint-disable-next-line no-cond-assign
+  //   while ((m = regex.exec(text)) !== null) {
+  //     if (m.index === regex.lastIndex) {
+  //       regex.lastIndex += 1;
+  //     }
 
-      sitemaps.push(m[1]);
-    }
+  //     sitemaps.push(m[1]);
+  //   }
 
     // eslint-disable-next-line no-console
+    const sitemaps = ['https://www.westjet.com/book/sitemap-index.xml'];
     console.log('sitemaps', sitemaps);
 
     const promises = sitemaps.map((sitemap) => new Promise((resolve) => {
@@ -66,10 +67,10 @@ async function loadURLsFromRobots(href) {
     }));
 
     await Promise.all(promises);
-  } else {
-    // eslint-disable-next-line no-console
-    console.log('No robots.txt found');
-  }
+  // } else {
+  //   // eslint-disable-next-line no-console
+  //   console.log('No robots.txt found');
+  // }
   return urls;
 }
 
