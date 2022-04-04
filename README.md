@@ -4,11 +4,18 @@ WIP
 
 ## Usage
 
-In a folder of your Helix project (e.g. tools/importer), run: 
+In a folder of your Helix project (e.g. tools/importer), checkout and build the `helix-webui-importer` project. Run: 
 
 ```
+mkdir tools && mkdir tools/importer
+cd tools/importer
 git clone https://github.com/kptdobe/helix-webui-importer
-````
+cd helix-webui-importer
+npm run build
+cd ../../..
+```
+
+You may want to use `npm run build:dev` to get debuggable version of the imported helix-importer module.
 
 At the root of the project, run:
 

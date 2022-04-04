@@ -89,7 +89,7 @@ export default class PollImporter {
     }
 
     this.listeners.forEach((listener) => {
-      listener({ 
+      listener({
         ...out,
         url: this.transformation.url,
       });

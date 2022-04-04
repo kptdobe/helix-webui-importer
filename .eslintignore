@@ -1,1 +1,2 @@
-./lib/importer-bundle.js
+js/libs/**/*.*
+dist/**/*.*
