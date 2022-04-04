@@ -51,20 +51,14 @@ async function html2x(url, doc, transformCfg, toMd, toDocx, preprocess = true) {
     }
 
     async process(document) {
-      // remove the helix-importer from the provided DOM
-      const hlx = document.querySelector('helix-importer');
-      if (hlx) {
-        hlx.remove();
-      }
-
       let output = document.body;
       if (transformCfg && transformCfg.transformDOM) {
-        output = transformCfg.transformDOM(document, url);
+        output = transformCfg.transformDOM({ url, document });
       }
       output = output || document.body;
 
       if (transformCfg && transformCfg.generateDocumentPath) {
-        const p = transformCfg.generateDocumentPath(url, document);
+        const p = transformCfg.generateDocumentPath({ url, document });
         if (p) {
           name = path.basename(p);
           dirname = path.dirname(p);
