@@ -9,6 +9,7 @@
  * OF ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
  */
+/* eslint-disable class-methods-use-this, no-console */
 
 import path from 'path';
 import { JSDOM } from 'jsdom';
@@ -24,24 +25,26 @@ import docxStylesXML from '../resources/styles.xml';
 
 function preprocessDOM(document) {
   const elements = document.querySelectorAll('body, header, footer, div, span, section, main');
-  const getComputedStyle = document.defaultView.getComputedStyle;
-  elements.forEach((element) => {
-    // css background images will be lost -> write them in the DOM
-    const style = getComputedStyle(element);
-    if (style['background-image'] && style['background-image'].toLowerCase() !== 'none') {
-      element.style['background-image'] = style['background-image'];
-    }
-  });
+  const getComputedStyle = document.defaultView?.getComputedStyle;
+  if (getComputedStyle) {
+    elements.forEach((element) => {
+      // css background images will be lost -> write them in the DOM
+      const style = getComputedStyle(element);
+      if (style['background-image'] && style['background-image'].toLowerCase() !== 'none') {
+        element.style['background-image'] = style['background-image'];
+      }
+    });
+  }
 }
 
-async function html2x(url, document, transformCfg, toMd, toDocx, preprocess = true) {
+async function html2x(url, doc, transformCfg, toMd, toDocx, preprocess = true) {
   let name = 'index';
   let dirname = '';
 
   if (preprocess) {
-    preprocessDOM(document);
+    preprocessDOM(doc);
   }
-  const html = document.documentElement.outerHTML;
+  const html = doc.documentElement.outerHTML;
   class InternalImporter extends PageImporter {
     async fetch() {
       return new Response(html);
@@ -69,7 +72,7 @@ async function html2x(url, document, transformCfg, toMd, toDocx, preprocess = tr
       }
 
       const pir = new PageImporterResource(name, dirname, output, null, {
-        html: output.outerHTML
+        html: output.outerHTML,
       });
       return [pir];
     }
@@ -81,7 +84,7 @@ async function html2x(url, document, transformCfg, toMd, toDocx, preprocess = tr
     log: () => {},
     warn: (...args) => console.error(...args),
     error: (...args) => console.error(...args),
-  }
+  };
 
   const storageHandler = new MemoryHandler(logger);
   const importer = new InternalImporter({
@@ -89,21 +92,21 @@ async function html2x(url, document, transformCfg, toMd, toDocx, preprocess = tr
     skipDocxConversion: !toDocx,
     skipMDFileCreation: !toMd,
     logger,
-    docxStylesXML
+    docxStylesXML,
   });
 
   const pirs = await importer.import(url);
 
   const res = {
     html: pirs[0].extra.html,
-  }
+  };
 
   if (name !== 'index') {
     res.name = name;
     res.dirname = dirname;
     res.path = `${dirname}/${name}`;
   } else {
-    res.path = `/${name}`
+    res.path = `/${name}`;
   }
 
   if (toMd) {
@@ -112,24 +115,25 @@ async function html2x(url, document, transformCfg, toMd, toDocx, preprocess = tr
   }
   if (toDocx) {
     const docx = await storageHandler.get(pirs[0].docx);
-    res.docx = docx
+    res.docx = docx;
   }
-  
   return res;
 }
 
 async function html2md(url, document, transformCfg, preprocess) {
+  let doc = document;
   if (typeof document === 'string') {
-    document = new JSDOM(document, { runScripts: undefined }).window.document;
+    doc = new JSDOM(document, { runScripts: undefined }).window.document;
   }
-  return html2x(url, document, transformCfg, true, false, preprocess);
+  return html2x(url, doc, transformCfg, true, false, preprocess);
 }
 
 async function html2docx(url, document, transformCfg, preprocess) {
+  let doc = document;
   if (typeof document === 'string') {
-    document = new JSDOM(document, { runScripts: undefined }).window.document;
+    doc = new JSDOM(document, { runScripts: undefined }).window.document;
   }
-  return html2x(url, document, transformCfg, true, true, preprocess);
+  return html2x(url, doc, transformCfg, true, true, preprocess);
 }
 
 export {
