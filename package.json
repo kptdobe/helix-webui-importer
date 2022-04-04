@@ -5,8 +5,8 @@
   "description": "Import Import tool",
   "scripts": {
     "clean": "rm -fr dist && rm -fr ./js/libs/hlx",
-    "build:prod": "npm run clean && webpack --config webpack.prod.cjs && cp -fr ./dist/lib ./js/libs/hlx",
-    "build:dev": "rm -fr dist && webpack --config webpack.dev.cjs && cp -fr ./dist/lib ./js/libs/hlx",
+    "build:prod": "npm run clean && npm i && webpack --config webpack.prod.cjs && cp -fr ./dist/lib ./js/libs/hlx",
+    "build:dev": "npm run clean && npm i && webpack --config webpack.dev.cjs && cp -fr ./dist/lib ./js/libs/hlx",
     "build": "npm run build:prod",
     "lint:js": "eslint .",
     "lint:css": "stylelint 'styles.css'",
