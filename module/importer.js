@@ -86,7 +86,27 @@ async function html2x(url, doc, transformCfg, toMd, toDocx, preprocess = true) {
     skipDocxConversion: !toDocx,
     skipMDFileCreation: !toMd,
     logger,
-    docxStylesXML,
+    mdast2docxOptions: {
+      stylesXML: docxStylesXML,
+      svg2png: async (svg) => new Promise((resolve) => {
+        const svgBlob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' });
+        const svgUrl = URL.createObjectURL(svgBlob);
+        const img = new Image();
+        img.src = svgUrl;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          canvas.width = img.width;
+          canvas.height = img.height;
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.drawImage(img, 0, 0);
+          }
+          const canvasData = canvas.toDataURL('image/png');
+          const canvas64 = canvasData.replace(/^data:image\/(png|jpg);base64,/, '');
+          resolve(canvas64);
+        };
+      }),
+    },
   });
 
   const pirs = await importer.import(url);
