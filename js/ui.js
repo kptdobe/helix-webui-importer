@@ -177,7 +177,7 @@ const attachListeners = () => {
               });
               importStatus.imported += 1;
               // eslint-disable-next-line no-console
-              console.log(`Imported: ${importStatus.imported}`);
+              console.log(`Imported: ${importStatus.imported} => ${originalURL}`);
               await config.importer.transform();
             } catch (error) {
               // try to detect redirects
