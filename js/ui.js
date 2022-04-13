@@ -171,25 +171,32 @@ const attachListeners = () => {
           const includeDocx = !!dirHandle;
 
           window.setTimeout(async () => {
+            let error;
             const { originalURL } = frame.dataset;
             const { replacedURL } = frame.dataset;
-            try {
-              config.importer.setTransformationInput({
-                url: replacedURL,
-                document: frame.contentDocument,
-                includeDocx,
-              });
-              importStatus.imported += 1;
-              // eslint-disable-next-line no-console
-              console.log(`Imported: ${importStatus.imported} => ${originalURL}`);
-              await config.importer.transform();
-            } catch (error) {
+            if (frame.contentDocument) {
+              try {
+                config.importer.setTransformationInput({
+                  url: replacedURL,
+                  document: frame.contentDocument,
+                  includeDocx,
+                });
+                importStatus.imported += 1;
+                // eslint-disable-next-line no-console
+                console.log(`Imported: ${importStatus.imported} => ${originalURL}`);
+                await config.importer.transform();
+              } catch (e) {
+                error = e;
+              }
+            }
+
+            if (error || !frame.contentDocument) {
               // try to detect redirects
               const res = await fetch(replacedURL);
               if (res.ok) {
                 if (res.redirected) {
                   // eslint-disable-next-line no-console
-                  console.error(`Cannot transform ${originalURL} - redirected to ${res.url}`, error);
+                  console.warn(`Cannot transform ${originalURL} - redirected to ${res.url}`, error);
                   importStatus.rows.push({
                     url: originalURL,
                     status: 'Redirect',
