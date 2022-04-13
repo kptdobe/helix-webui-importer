@@ -53,7 +53,7 @@ async function html2x(url, doc, transformCfg, toMd, toDocx, preprocess = true) {
     async process(document) {
       let output = document.body;
       if (transformCfg && transformCfg.transformDOM) {
-        output = transformCfg.transformDOM({ url, document });
+        output = transformCfg.transformDOM({ url, document, html });
       }
       output = output || document.body;
 
