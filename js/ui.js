@@ -170,7 +170,7 @@ const attachListeners = () => {
             // eslint-disable-next-line no-console
             console.warn(`Cannot transform ${src} - redirected to ${res.url}`);
             importStatus.rows.push({
-              url: src,
+              url,
               status: 'Redirect',
               redirect: res.url,
             });
@@ -230,7 +230,7 @@ const attachListeners = () => {
           // eslint-disable-next-line no-console
           console.warn(`Cannot transform ${src} - page may not exist (status ${res.status})`);
           importStatus.rows.push({
-            url: src,
+            url,
             status: `Invalid: ${res.status}`,
           });
           processNext();
