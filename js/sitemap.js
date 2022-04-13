@@ -9,37 +9,39 @@
  * OF ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
  */
-async function loadSitemap(sitemapURL) {
-  const resp = await fetch(sitemapURL);
-  const xml = await resp.text();
-  const sitemap = (new window.DOMParser()).parseFromString(xml, 'text/xml');
-  const subSitemaps = [...sitemap.querySelectorAll('sitemap loc')];
-  let urls = [];
-  const promises = subSitemaps.map((loc) => new Promise((resolve) => {
-    const subSitemapURL = new URL(loc.textContent);
-    loadSitemap(subSitemapURL.pathname).then((result) => {
-      urls = urls.concat(result);
-      resolve(true);
+async function loadSitemap(sitemapURL, origin) {
+  const url = new URL(sitemapURL, origin);
+  const resp = await fetch(`${origin}${url.pathname}${url.search}`);
+  if (resp.ok) {
+    const xml = await resp.text();
+    const sitemap = (new window.DOMParser()).parseFromString(xml, 'text/xml');
+    const subSitemaps = [...sitemap.querySelectorAll('sitemap loc')];
+    let urls = [];
+    const promises = subSitemaps.map((loc) => new Promise((resolve) => {
+      const subSitemapURL = new URL(loc.textContent);
+      loadSitemap(subSitemapURL.pathname, origin).then((result) => {
+        urls = urls.concat(result);
+        resolve(true);
+      });
+    }));
+
+    await Promise.all(promises);
+
+    const urlLocs = sitemap.querySelectorAll('url loc');
+    urlLocs.forEach((loc) => {
+      urls.push(loc.textContent);
     });
-  }));
 
-  await Promise.all(promises);
-
-  const urlLocs = sitemap.querySelectorAll('url loc');
-  urlLocs.forEach((loc) => {
-    urls.push(loc.textContent);
-  });
-
-  return urls;
+    return urls;
+  }
+  return [];
 }
 
-async function loadURLsFromRobots(href) {
+async function loadURLsFromRobots(origin) {
   let urls = [];
-  const url = new URL(href);
-  url.pathname = '/robots.txt';
-  url.search = '';
+  const url = new URL('/robots.txt', origin);
   const res = await fetch(url.toString());
-  if (res.ok) {
+  if (false || res.ok) {
     const text = await res.text();
     // eslint-disable-next-line no-console
     console.log('found robots.txt', text);
@@ -56,7 +58,7 @@ async function loadURLsFromRobots(href) {
     }
 
     const promises = sitemaps.map((sitemap) => new Promise((resolve) => {
-      loadSitemap(sitemap).then((u) => {
+      loadSitemap(sitemap, origin).then((u) => {
         urls = urls.concat(u);
         resolve();
       });
@@ -65,7 +67,8 @@ async function loadURLsFromRobots(href) {
     await Promise.all(promises);
   } else {
     // eslint-disable-next-line no-console
-    console.log('No robots.txt found');
+    console.log('No robots.txt found - trying sitemap.xml');
+    return loadSitemap('/sitemap.xml', origin);
   }
   return urls;
 }
