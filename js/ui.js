@@ -163,6 +163,10 @@ const attachListeners = () => {
         const frame = document.createElement('iframe');
         frame.id = 'contentFrame';
 
+        if (!config.enableJS) {
+          frame.sandbox = 'allow-same-origin';
+        }
+
         const onLoad = async () => {
           const includeDocx = !!dirHandle;
 
@@ -262,6 +266,10 @@ const attachListeners = () => {
 
         const frame = document.createElement('iframe');
         frame.id = 'contentFrame';
+
+        if (!config.enableJS) {
+          frame.sandbox = 'allow-same-origin';
+        }
 
         const onLoad = async () => {
           window.setTimeout(async () => {
