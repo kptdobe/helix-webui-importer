@@ -151,7 +151,7 @@ const attachListeners = () => {
     importStatus.rows = [];
 
     const urlsArray = URLS_INPUT.value.split('\n').reverse().filter((u) => u.trim() !== '');
-    const processNext = () => {
+    const processNext = async () => {
       if (urlsArray.length > 0) {
         const url = urlsArray.pop();
         let src = url;
@@ -160,88 +160,84 @@ const attachListeners = () => {
           src = `${config.hostReplace}${u.pathname}${u.search}`;
         }
 
-        const frame = document.createElement('iframe');
-        frame.id = 'contentFrame';
+        importStatus.imported += 1;
+        // eslint-disable-next-line no-console
+        console.log(`Importing: ${importStatus.imported} => ${src}`);
 
-        if (!config.enableJS) {
-          frame.sandbox = 'allow-same-origin';
-        }
+        const res = await fetch(src);
+        if (res.ok) {
+          if (res.redirected) {
+            // eslint-disable-next-line no-console
+            console.warn(`Cannot transform ${src} - redirected to ${res.url}`);
+            importStatus.rows.push({
+              url: src,
+              status: 'Redirect',
+              redirect: res.url,
+            });
+            processNext();
+          } else {
+            const frame = document.createElement('iframe');
+            frame.id = 'contentFrame';
 
-        const onLoad = async () => {
-          const includeDocx = !!dirHandle;
-
-          window.setTimeout(async () => {
-            let error;
-            const { originalURL } = frame.dataset;
-            const { replacedURL } = frame.dataset;
-            if (frame.contentDocument) {
-              try {
-                config.importer.setTransformationInput({
-                  url: replacedURL,
-                  document: frame.contentDocument,
-                  includeDocx,
-                });
-                importStatus.imported += 1;
-                // eslint-disable-next-line no-console
-                console.log(`Imported: ${importStatus.imported} => ${originalURL}`);
-                await config.importer.transform();
-              } catch (e) {
-                error = e;
-              }
+            if (!config.enableJS) {
+              frame.sandbox = 'allow-same-origin';
             }
 
-            if (error || !frame.contentDocument) {
-              // try to detect redirects
-              const res = await fetch(replacedURL);
-              if (res.ok) {
-                if (res.redirected) {
-                  // eslint-disable-next-line no-console
-                  console.warn(`Cannot transform ${originalURL} - redirected to ${res.url}`, error);
-                  importStatus.rows.push({
-                    url: originalURL,
-                    status: 'Redirect',
-                    redirect: res.url,
-                  });
-                } else {
-                  // eslint-disable-next-line no-console
-                  console.error(`Cannot transform ${originalURL} - transformation error ?`, error);
-                  // fallback, probably transformation error
-                  importStatus.rows.push({
-                    url: originalURL,
-                    status: `Error: ${error.message}`,
-                  });
+            const onLoad = async () => {
+              const includeDocx = !!dirHandle;
+
+              window.setTimeout(async () => {
+                const { originalURL } = frame.dataset;
+                const { replacedURL } = frame.dataset;
+                if (frame.contentDocument) {
+                  try {
+                    config.importer.setTransformationInput({
+                      url: replacedURL,
+                      document: frame.contentDocument,
+                      includeDocx,
+                    });
+                    await config.importer.transform();
+                  } catch (error) {
+                    // eslint-disable-next-line no-console
+                    console.error(`Cannot transform ${originalURL} - transformation error ?`, error);
+                    // fallback, probably transformation error
+                    importStatus.rows.push({
+                      url: originalURL,
+                      status: `Error: ${error.message}`,
+                    });
+                  }
                 }
-              } else {
-                // eslint-disable-next-line no-console
-                console.error(`Cannot transform ${originalURL} - page may not exist (status ${res.status})`, error);
-                importStatus.rows.push({
-                  url: originalURL,
-                  status: `Invalid: ${res.status}`,
-                });
-              }
-            }
 
-            const event = new Event('transformation-complete');
-            frame.dispatchEvent(event);
-          }, config.pageLoadTimeout || 1);
-        };
+                const event = new Event('transformation-complete');
+                frame.dispatchEvent(event);
+              }, config.pageLoadTimeout || 1);
+            };
 
-        frame.addEventListener('load', onLoad);
-        frame.addEventListener('transformation-complete', processNext);
+            frame.addEventListener('load', onLoad);
+            frame.addEventListener('transformation-complete', processNext);
 
-        frame.dataset.originalURL = url;
-        frame.dataset.replacedURL = src;
-        frame.src = src;
+            frame.dataset.originalURL = url;
+            frame.dataset.replacedURL = src;
+            frame.src = src;
 
-        const current = document.getElementById('contentFrame');
-        current.removeEventListener('load', onLoad);
-        current.removeEventListener('transformation-complete', processNext);
+            const current = document.getElementById('contentFrame');
+            current.removeEventListener('load', onLoad);
+            current.removeEventListener('transformation-complete', processNext);
 
-        current.replaceWith(frame);
-
-        ui.markdownPreview.innerHTML = ui.showdownConverter.makeHtml('Import in progress...');
-        ui.transformedEditor.setValue('');
-        ui.markdownEditor.setValue('');
+            current.replaceWith(frame);
+          }
+        } else {
+          // eslint-disable-next-line no-console
+          console.warn(`Cannot transform ${src} - page may not exist (status ${res.status})`);
+          importStatus.rows.push({
+            url: src,
+            status: `Invalid: ${res.status}`,
+          });
+          processNext();
+        }
+        // ui.markdownPreview.innerHTML = ui.showdownConverter.makeHtml('Import in progress...');
+        // ui.transformedEditor.setValue('');
+        // ui.markdownEditor.setValue('');
       } else {
         const frame = document.getElementById('contentFrame');
         frame.removeEventListener('transformation-complete', processNext);

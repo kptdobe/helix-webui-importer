@@ -119,8 +119,10 @@ async function html2x(url, doc, transformCfg, toMd, toDocx, preprocess = true) {
     res.name = name;
     res.dirname = dirname;
     res.path = `${dirname}/${name}`;
-  } else {
+  } else if (dirname === '') {
     res.path = `/${name}`;
+  } else {
+    res.path = `${dirname}/${name}`;
   }
 
   if (toMd) {
