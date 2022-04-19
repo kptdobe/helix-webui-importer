@@ -504,7 +504,10 @@ const attachListeners = () => {
   }));
 
   GETURLSFROMROBOTS_BUTTON.addEventListener('click', (async () => {
-    const urls = await loadURLsFromRobots(config.origin);
+    // use prompt for now util we get a better UI element
+    // eslint-disable-next-line no-alert
+    const host = window.prompt('Please provide the host');
+    const urls = await loadURLsFromRobots(config.origin, host);
     if (urls === 0) {
       // eslint-disable-next-line no-alert
       alert(`No urls found. robots.txt or sitemap might not exist on ${config.origin}`);

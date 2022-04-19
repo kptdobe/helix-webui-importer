@@ -9,8 +9,11 @@
  * OF ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
  */
-async function loadSitemap(sitemapURL, origin) {
+async function loadSitemap(sitemapURL, origin, host) {
   const url = new URL(sitemapURL, origin);
+  if (!url.searchParams.get('host')) {
+    url.searchParams.append('host', host);
+  }
   const resp = await fetch(`${origin}${url.pathname}${url.search}`);
   if (resp.ok) {
     const xml = await resp.text();
@@ -18,8 +21,8 @@ async function loadSitemap(sitemapURL, origin) {
     const subSitemaps = [...sitemap.querySelectorAll('sitemap loc')];
     let urls = [];
     const promises = subSitemaps.map((loc) => new Promise((resolve) => {
-      const subSitemapURL = new URL(loc.textContent);
-      loadSitemap(subSitemapURL.pathname, origin).then((result) => {
+      const subSitemapURL = new URL(loc.textContent, origin);
+      loadSitemap(subSitemapURL.pathname, origin, host).then((result) => {
         urls = urls.concat(result);
         resolve(true);
       });
@@ -29,7 +32,8 @@ async function loadSitemap(sitemapURL, origin) {
 
     const urlLocs = sitemap.querySelectorAll('url loc');
     urlLocs.forEach((loc) => {
-      urls.push(loc.textContent);
+      const u = new URL(loc.textContent, host);
+      urls.push(u.toString());
     });
 
     return urls;
@@ -37,9 +41,9 @@ async function loadSitemap(sitemapURL, origin) {
   return [];
 }
 
-async function loadURLsFromRobots(origin) {
+async function loadURLsFromRobots(origin, host) {
   let urls = [];
-  const url = new URL('/robots.txt', origin);
+  const url = new URL(`/robots.txt?host=${host}`, origin);
   const res = await fetch(url.toString());
   if (false || res.ok) {
     const text = await res.text();
@@ -58,7 +62,7 @@ async function loadURLsFromRobots(origin) {
     }
 
     const promises = sitemaps.map((sitemap) => new Promise((resolve) => {
-      loadSitemap(sitemap, origin).then((u) => {
+      loadSitemap(sitemap, origin, host).then((u) => {
         urls = urls.concat(u);
         resolve();
       });
@@ -68,7 +72,7 @@ async function loadURLsFromRobots(origin) {
   } else {
     // eslint-disable-next-line no-console
     console.log('No robots.txt found - trying sitemap.xml');
-    return loadSitemap('/sitemap.xml', origin);
+    return loadSitemap('/sitemap.xml', origin, host);
   }
   return urls;
 }
