@@ -95,8 +95,29 @@ async function html2x(url, doc, transformCfg, toMd, toDocx, preprocess = true) {
         img.src = svgUrl;
         img.onload = () => {
           const canvas = document.createElement('canvas');
-          canvas.width = img.width;
-          canvas.height = img.height;
+
+          const parser = new DOMParser();
+          const svgDoc = parser.parseFromString(svg, 'text/html');
+
+          const svgTag = svgDoc.querySelector('svg');
+          const viewBox = svgTag?.getAttribute('viewBox');
+
+          let width = img.naturalWidth;
+          let height = img.naturalHeight;
+          if (viewBox) {
+            const [, , w, h] = viewBox.split(' ').map(Number);
+            if (w > img.naturalWidth || h > img.naturalHeight) {
+              // for some svgs, the natural width / height are not correctly computed
+              width = w;
+              height = h;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          img.width = width;
+          img.height = height;
+
           const ctx = canvas.getContext('2d');
           if (ctx) {
             ctx.drawImage(img, 0, 0);
