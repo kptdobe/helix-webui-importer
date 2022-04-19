@@ -14,7 +14,7 @@
 export default class PollImporter {
   constructor(cfg) {
     this.config = {
-      importFileURL: 'http://localhost:3000/tools/importer/import.js',
+      importFileURL: `${cfg.origin}/tools/importer/import.js`,
       poll: true,
       ...cfg,
     };
