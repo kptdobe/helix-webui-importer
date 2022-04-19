@@ -110,6 +110,15 @@ const enableProcessButtons = () => {
   });
 };
 
+const getProxiedURL = (url, origin) => {
+  const u = new URL(url);
+  if (!u.searchParams.get('host')) {
+    u.searchParams.append('host', u.origin);
+  }
+  const src = `${origin}${u.pathname}${u.search}`;
+  return src;
+};
+
 const attachListeners = () => {
   config.importer.addListener(async (out) => {
     const includeDocx = !!out.docx;
@@ -154,11 +163,7 @@ const attachListeners = () => {
     const processNext = async () => {
       if (urlsArray.length > 0) {
         const url = urlsArray.pop();
-        let src = url;
-        if (config.hostReplace && config.hostReplace !== '') {
-          const u = new URL(url);
-          src = `${config.hostReplace}${u.pathname}${u.search}`;
-        }
+        const src = getProxiedURL(url, config.origin);
 
         importStatus.imported += 1;
         // eslint-disable-next-line no-console
@@ -261,11 +266,7 @@ const attachListeners = () => {
     const processNext = () => {
       if (urlsArray.length > 0) {
         const url = urlsArray.pop();
-        let src = url;
-        if (config.hostReplace && config.hostReplace !== '') {
-          const u = new URL(url);
-          src = `${config.hostReplace}${u.pathname}${u.search}`;
-        }
+        const src = getProxiedURL(url, config.origin);
 
         const frame = document.createElement('iframe');
         frame.id = 'contentFrame';
@@ -503,10 +504,10 @@ const attachListeners = () => {
   }));
 
   GETURLSFROMROBOTS_BUTTON.addEventListener('click', (async () => {
-    const urls = await loadURLsFromRobots(config.hostReplace);
+    const urls = await loadURLsFromRobots(config.origin);
     if (urls === 0) {
       // eslint-disable-next-line no-alert
-      alert(`No urls found. robots.txt or sitemap might not exist on ${config.hostReplace}`);
+      alert(`No urls found. robots.txt or sitemap might not exist on ${config.origin}`);
     } else {
       const workbook = new ExcelJS.Workbook();
       const worksheet = workbook.addWorksheet('Sheet 1');
@@ -524,6 +525,7 @@ const attachListeners = () => {
 };
 
 const init = () => {
+  config.origin = window.location.origin;
   OPTION_FIELDS.forEach((field) => {
     const value = localStorage.getItem(`option-field-${field.id}`);
     if (value !== null) {
@@ -538,6 +540,7 @@ const init = () => {
   });
 
   config.importer = new PollImporter({
+    origin: config.origin,
     poll: false,
     importFileURL: config.importFileURL,
   });
