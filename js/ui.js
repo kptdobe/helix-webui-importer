@@ -19,6 +19,7 @@ const CRAWLER_CONTAINER = document.querySelector('.crawler');
 
 const URLS_INPUT = document.getElementById('urls');
 const OPTION_FIELDS = document.querySelectorAll('.optionField');
+const IMPORTFILEURL_FIELD = document.querySelector('#importFileURL');
 const IMPORT_BUTTON = document.getElementById('runImport');
 const CRAWL_BUTTON = document.getElementById('runCrawl');
 const PROCESS_BUTTONS = document.querySelectorAll('#runImport, #runCrawl');
@@ -117,6 +118,14 @@ const getProxiedURL = (url, origin) => {
   }
   const src = `${origin}${u.pathname}${u.search}`;
   return src;
+};
+
+const createImporter = () => {
+  config.importer = new PollImporter({
+    origin: config.origin,
+    poll: false,
+    importFileURL: config.importFileURL,
+  });
 };
 
 const attachListeners = () => {
@@ -430,6 +439,12 @@ const attachListeners = () => {
     });
   });
 
+  IMPORTFILEURL_FIELD.addEventListener('change', (event) => {
+    if (config.importer) {
+      config.importer.setImportFileURL(event.target.value);
+    }
+  });
+
   TABS_CONTAINER.forEach((container) => {
     const buttons = container.querySelectorAll('.tab');
     buttons.forEach((button) => {
@@ -542,11 +557,7 @@ const init = () => {
     config[field.id] = field.type === 'checkbox' ? field.checked : field.value;
   });
 
-  config.importer = new PollImporter({
-    origin: config.origin,
-    poll: false,
-    importFileURL: config.importFileURL,
-  });
+  createImporter();
 
   setupUI();
   attachListeners();
