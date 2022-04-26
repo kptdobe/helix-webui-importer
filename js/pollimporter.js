@@ -104,6 +104,10 @@ export default class PollImporter {
     };
   }
 
+  setImportFileURL(importFileURL) {
+    this.config.importFileURL = importFileURL;
+  }
+
   addListener(listener) {
     this.listeners.push(listener);
   }
