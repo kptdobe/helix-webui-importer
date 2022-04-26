@@ -111,13 +111,22 @@ const enableProcessButtons = () => {
   });
 };
 
-const getProxiedURL = (url, origin) => {
+const getProxyURLSetup = (url, origin) => {
   const u = new URL(url);
   if (!u.searchParams.get('host')) {
     u.searchParams.append('host', u.origin);
   }
   const src = `${origin}${u.pathname}${u.search}`;
-  return src;
+  return {
+    remote: {
+      url,
+      origin: u.origin,
+    },
+    proxy: {
+      url: src,
+      origin,
+    },
+  };
 };
 
 const createImporter = () => {
@@ -172,7 +181,8 @@ const attachListeners = () => {
     const processNext = async () => {
       if (urlsArray.length > 0) {
         const url = urlsArray.pop();
-        const src = getProxiedURL(url, config.origin);
+        const { remote, proxy } = getProxyURLSetup(url, config.origin);
+        const src = proxy.url;
 
         importStatus.imported += 1;
         // eslint-disable-next-line no-console
@@ -183,10 +193,15 @@ const attachListeners = () => {
           if (res.redirected) {
             // eslint-disable-next-line no-console
             console.warn(`Cannot transform ${src} - redirected to ${res.url}`);
+            const u = new URL(res.url);
+            let redirect = res.url;
+            if (u.origin === window.location.origin) {
+              redirect = `${remote.origin}${u.pathname}`;
+            }
             importStatus.rows.push({
               url,
               status: 'Redirect',
-              redirect: res.url,
+              redirect,
             });
             processNext();
           } else {
@@ -275,7 +290,8 @@ const attachListeners = () => {
     const processNext = () => {
       if (urlsArray.length > 0) {
         const url = urlsArray.pop();
-        const src = getProxiedURL(url, config.origin);
+        const { proxy } = getProxyURLSetup(url, config.origin);
+        const src = proxy.url;
 
         const frame = document.createElement('iframe');
         frame.id = 'contentFrame';
