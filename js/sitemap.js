@@ -74,7 +74,7 @@ async function loadURLsFromRobots(origin, host) {
     console.log('No robots.txt found - trying sitemap.xml');
     return loadSitemap('/sitemap.xml', origin, host);
   }
-  return urls;
+  return [...new Set(urls)];
 }
 
 export {
