@@ -317,6 +317,7 @@ const attachListeners = () => {
                 if (a.href) {
                   const u = new URL(a.href);
                   if (u.host === originalURL.host || u.host === replacedURL.host) {
+                    u.searchParams.delete('host');
                     const found = `${originalURL.origin}${u.pathname}${u.search}`;
                     // eslint-disable-next-line max-len
                     if (!crawlStatus.urls.includes(found) && !urlsArray.includes(found) && current !== found) {
