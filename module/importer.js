@@ -11,171 +11,75 @@
  */
 /* eslint-disable class-methods-use-this, no-console */
 
-import path from 'path';
-import { JSDOM } from 'jsdom';
 import {
-  PageImporter,
-  PageImporterResource,
   DOMUtils,
   Blocks,
-  MemoryHandler,
+  html2docx,
+  html2md,
 } from '@adobe/helix-importer';
 
 import docxStylesXML from '../resources/styles.xml';
 
-function preprocessDOM(document) {
-  const elements = document.querySelectorAll('body, header, footer, div, span, section, main');
-  const getComputedStyle = document.defaultView?.getComputedStyle;
-  if (getComputedStyle) {
-    elements.forEach((element) => {
-      // css background images will be lost -> write them in the DOM
-      const style = getComputedStyle(element);
-      if (style['background-image'] && style['background-image'].toLowerCase() !== 'none') {
-        element.style['background-image'] = style['background-image'];
-      }
-    });
-  }
-}
+const options = {
+  docxStylesXML,
+  svg2png: async (svg) => new Promise((resolve) => {
+    const svgBlob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' });
+    const svgUrl = URL.createObjectURL(svgBlob);
+    const img = new Image();
+    img.src = svgUrl;
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
 
-async function html2x(url, doc, transformCfg, toMd, toDocx, preprocess = true) {
-  let name = 'index';
-  let dirname = '';
+      const parser = new DOMParser();
+      const svgDoc = parser.parseFromString(svg, 'text/html');
 
-  if (preprocess) {
-    preprocessDOM(doc);
-  }
-  const html = doc.documentElement.outerHTML;
-  class InternalImporter extends PageImporter {
-    async fetch() {
-      return new Response(html);
-    }
+      const svgTag = svgDoc.querySelector('svg');
+      const viewBox = svgTag?.getAttribute('viewBox');
 
-    async process(document) {
-      let output = document.body;
-      if (transformCfg && transformCfg.transformDOM) {
-        output = transformCfg.transformDOM({ url, document, html });
-      }
-      output = output || document.body;
-
-      if (transformCfg && transformCfg.generateDocumentPath) {
-        const p = transformCfg.generateDocumentPath({ url, document });
-        if (p) {
-          name = path.basename(p);
-          dirname = path.dirname(p);
+      let width = img.naturalWidth;
+      let height = img.naturalHeight;
+      if (viewBox) {
+        const [, , w, h] = viewBox.split(' ').map(Number);
+        if (w > img.naturalWidth || h > img.naturalHeight) {
+          // for some svgs, the natural width / height are not correctly computed
+          width = w;
+          height = h;
         }
       }
 
-      const pir = new PageImporterResource(name, dirname, output, null, {
-        html: output.outerHTML,
-      });
-      return [pir];
-    }
-  }
+      canvas.width = width;
+      canvas.height = height;
+      img.width = width;
+      img.height = height;
 
-  const logger = {
-    debug: () => {},
-    info: () => {},
-    log: () => {},
-    warn: (...args) => console.error(...args),
-    error: (...args) => console.error(...args),
-  };
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.drawImage(img, 0, 0);
+      }
+      const canvasData = canvas.toDataURL('image/png');
+      const canvas64 = canvasData.replace(/^data:image\/(png|jpg);base64,/, '');
+      resolve(canvas64);
+    };
+  }),
+};
 
-  const storageHandler = new MemoryHandler(logger);
-  const importer = new InternalImporter({
-    storageHandler,
-    skipDocxConversion: !toDocx,
-    skipMDFileCreation: !toMd,
-    logger,
-    mdast2docxOptions: {
-      stylesXML: docxStylesXML,
-      svg2png: async (svg) => new Promise((resolve) => {
-        const svgBlob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' });
-        const svgUrl = URL.createObjectURL(svgBlob);
-        const img = new Image();
-        img.src = svgUrl;
-        img.onload = () => {
-          const canvas = document.createElement('canvas');
-
-          const parser = new DOMParser();
-          const svgDoc = parser.parseFromString(svg, 'text/html');
-
-          const svgTag = svgDoc.querySelector('svg');
-          const viewBox = svgTag?.getAttribute('viewBox');
-
-          let width = img.naturalWidth;
-          let height = img.naturalHeight;
-          if (viewBox) {
-            const [, , w, h] = viewBox.split(' ').map(Number);
-            if (w > img.naturalWidth || h > img.naturalHeight) {
-              // for some svgs, the natural width / height are not correctly computed
-              width = w;
-              height = h;
-            }
-          }
-
-          canvas.width = width;
-          canvas.height = height;
-          img.width = width;
-          img.height = height;
-
-          const ctx = canvas.getContext('2d');
-          if (ctx) {
-            ctx.drawImage(img, 0, 0);
-          }
-          const canvasData = canvas.toDataURL('image/png');
-          const canvas64 = canvasData.replace(/^data:image\/(png|jpg);base64,/, '');
-          resolve(canvas64);
-        };
-      }),
-    },
+async function html2mdWrapper(url, document, transformCfg, preprocess) {
+  return html2md(url, document, transformCfg, {
+    ...options,
+    preprocess,
   });
-
-  const pirs = await importer.import(url);
-
-  const res = {
-    html: pirs[0].extra.html,
-  };
-
-  if (name !== 'index') {
-    res.name = name;
-    res.dirname = dirname;
-    res.path = `${dirname}/${name}`;
-  } else if (dirname === '') {
-    res.path = `/${name}`;
-  } else {
-    res.path = `${dirname}/${name}`;
-  }
-
-  if (toMd) {
-    const md = await storageHandler.get(pirs[0].md);
-    res.md = md;
-  }
-  if (toDocx) {
-    const docx = await storageHandler.get(pirs[0].docx);
-    res.docx = docx;
-  }
-  return res;
 }
 
-async function html2md(url, document, transformCfg, preprocess) {
-  let doc = document;
-  if (typeof document === 'string') {
-    doc = new JSDOM(document, { runScripts: undefined }).window.document;
-  }
-  return html2x(url, doc, transformCfg, true, false, preprocess);
-}
-
-async function html2docx(url, document, transformCfg, preprocess) {
-  let doc = document;
-  if (typeof document === 'string') {
-    doc = new JSDOM(document, { runScripts: undefined }).window.document;
-  }
-  return html2x(url, doc, transformCfg, true, true, preprocess);
+async function html2docxWrapper(url, document, transformCfg, preprocess) {
+  return html2docx(url, document, transformCfg, {
+    ...options,
+    preprocess,
+  });
 }
 
 export {
   Blocks,
   DOMUtils,
-  html2md,
-  html2docx,
+  html2mdWrapper as html2md,
+  html2docxWrapper as html2docx,
 };

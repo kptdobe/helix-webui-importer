@@ -40,11 +40,9 @@ module.exports = {
     },
     alias: {
       'fs-extra': 'fs',
-      'node-fetch': 'fetch',
     },
   },
   externals: {
-    'node-fetch': 'fetch',
     'node:stream/web': 'commonjs2 node:stream/web',
   },
   plugins: [
@@ -59,6 +57,9 @@ module.exports = {
     new NodePolyfillPlugin(),
     new NormalModuleReplacementPlugin(/@adobe\/helix-fetch/, (resource) => {
       resource.request = path.resolve(__dirname, './polyfills/fetch-constructor-polyfill.cjs');
+    }),
+    new NormalModuleReplacementPlugin(/node-fetch/, (resource) => {
+      resource.request = path.resolve(__dirname, './polyfills/node-fetch-constructor-polyfill.cjs');
     }),
   ],
   module: {
